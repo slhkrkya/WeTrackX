@@ -1,9 +1,17 @@
 'use client';
-
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 
 type Health = { status: string };
+
+function getErrorMessage(e: unknown) {
+  if (e instanceof Error) return e.message;
+  try {
+    return JSON.stringify(e);
+  } catch {
+    return String(e);
+  }
+}
 
 export default function Home() {
   const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
@@ -15,22 +23,17 @@ export default function Home() {
         const res = await api<Health>('/health');
         setStatus(res.status === 'ok' ? 'ok' : 'error');
         setMessage(JSON.stringify(res));
-      } catch (e: any) {
+      } catch (e: unknown) {
         setStatus('error');
-        setMessage(e?.message ?? 'unknown error');
+        setMessage(getErrorMessage(e));
       }
     })();
   }, []);
 
   return (
-    <main className="min-h-dvh p-8 flex flex-col items-start gap-6">
-      <h1 className="text-3xl font-bold">WeTrackX</h1>
-      <h1 className="text-3xl font-bold">WeTrackX</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        Tailwind kurulum testi: bu metin gri görünmeli.
-      </p>
-
-      <section className="space-y-2">
+    <main className="min-h-dvh p-6">
+      <h1 className="text-2xl font-bold">WeTrackX</h1>
+      <section className="space-y-2 mt-4">
         <h2 className="text-xl font-semibold">API Sağlık Durumu</h2>
         <div
           className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm border
