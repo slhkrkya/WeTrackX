@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { HealthController } from './health.controller';
 import { User } from './users/user.entity';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
