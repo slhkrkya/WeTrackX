@@ -5,6 +5,9 @@ import { User } from './users/user.entity';
 import { HealthController } from './health.controller';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { AccountsModule } from './accounts/accounts.module';
+import { CategoriesModule } from './categories/categories.module';
+import { TransactionsModule } from './transactions/transactions.module';
 
 @Module({
   imports: [
@@ -23,14 +26,16 @@ import { AuthModule } from './auth/auth.module';
         database: cfg.get<string>('DB_NAME'),
         autoLoadEntities: true,
         synchronize: false,
-        // migrationsRun: true, // İstersen prod’da otomatik koşturursun; dev’de CLI ile çalıştıracağız.
+        // migrationsRun: true, // İstersen prod’da otomatik koşturursun
       }),
     }),
 
-    // İleride repository injection için entity modüllerini burada import edeceğiz (UsersModule vs.)
     TypeOrmModule.forFeature([User]),
     UsersModule,
     AuthModule,
+    AccountsModule,
+    CategoriesModule,
+    TransactionsModule,
   ],
   controllers: [HealthController],
 })

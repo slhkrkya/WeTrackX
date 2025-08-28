@@ -1,6 +1,9 @@
 import 'dotenv/config';
 import { DataSource } from 'typeorm';
 import { User } from './users/user.entity';
+import { Account } from './accounts/account.entity';
+import { Category } from './categories/category.entity';
+import { Transaction } from './transactions/transaction.entity';
 
 export default new DataSource({
   type: 'postgres',
@@ -11,7 +14,7 @@ export default new DataSource({
   database: process.env.DB_NAME,
 
   // CLI, TS entity'leri görsün
-  entities: [User],
+  entities: [User, Account, Transaction,Category],
 
   // TS migration’ları
   migrations: ['src/migrations/*.ts'],
