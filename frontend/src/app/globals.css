@@ -1,5 +1,17 @@
 @import "tailwindcss";
 
+/* Tailwind v4: Tema token'larını @theme ile tanımla */
+@theme {
+  /* Renk token'ları -> bg-background, text-foreground kullanabilirsin */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  /* Yazı tipleri -> font-sans, font-mono sınıfları */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* Kendi CSS değişkenlerin */
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,8 +24,12 @@
   }
 }
 
+/* Global reset/temel */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
 }
+
+/* İstersen: token yerine doğrudan var() kullanmak için
+   bg-[var(--background)] / text-[var(--foreground)] yazabilirsin. */
