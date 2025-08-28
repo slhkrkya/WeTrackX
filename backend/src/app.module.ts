@@ -22,7 +22,8 @@ import { AuthModule } from './auth/auth.module';
         password: cfg.get<string>('DB_PASS'),
         database: cfg.get<string>('DB_NAME'),
         autoLoadEntities: true,
-        synchronize: true, // Sadece geliştirme aşamasında. Prod’da migration’a geçeceğiz.
+        synchronize: false,
+        // migrationsRun: true, // İstersen prod’da otomatik koşturursun; dev’de CLI ile çalıştıracağız.
       }),
     }),
 
