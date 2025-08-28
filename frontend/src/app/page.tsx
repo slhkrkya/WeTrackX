@@ -33,6 +33,9 @@ export default function Home() {
   return (
     <main className="min-h-dvh p-6">
       <h1 className="text-2xl font-bold">WeTrackX</h1>
+      <p className="text-sm">
+        Giriş yaptıysan <a href="/dashboard" className="underline">Dashboard</a>’a devam edebilirsin.
+      </p>
       <section className="space-y-2 mt-4">
         <h2 className="text-xl font-semibold">API Sağlık Durumu</h2>
         <div

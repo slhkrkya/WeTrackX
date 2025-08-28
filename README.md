@@ -19,30 +19,10 @@ npm run migration:run        # şemayı uygula
 npm run seed                 # örnek kullanıcı
 npm run start:dev            # api 4000
 
-## Demo Kullanıcılar & Seed
+## Demo Kullanıcılar (Seed)
+`npm run seed` yalnızca demo kullanıcıları oluşturur:
 
-Seed script (`npm run seed`) çalıştırıldığında otomatik olarak aşağıdaki demo kullanıcılar ve veriler oluşturulur:
+- demo@demo.com / Demo123!
+- salih@example.com / 12345678
 
-### Kullanıcılar
-- **Demo User**  
-  Email: `demo@demo.com`  
-  Şifre: `Demo123!`
-
-- **Salih Karakaya**  
-  Email: `salih@example.com`  
-  Şifre: `12345678`
-
-### Kategoriler (her kullanıcı için)
-- Maaş (INCOME)
-- Yemek (EXPENSE)
-- Ulaşım (EXPENSE)
-- Eğlence (EXPENSE)
-
-### İşlemler (son 30 gün içinde örnek)
-- Aylık Maaş (+20.000 TRY)
-- Yemek (kebap) (-150 TRY)
-- Otobüs bileti (-40 TRY)
-- Sinema (-120 TRY)
-- Yemek (fastfood) (-200 TRY)
-
-Bu sayede `/dashboard` ekranı açıldığında raporlar, grafikler ve son işlemler hazır gelir.
+Hesap, kategori ve işlem verileri UI üzerinden eklenecektir.

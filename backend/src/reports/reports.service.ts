@@ -17,17 +17,22 @@ export class ReportsService {
    *  - TRANSFER: fromAccount => -amount, toAccount => +amount
    */
   async getAccountBalances(ownerId: string) {
+    // Aynı ifadeyi hem SELECT hem GROUP BY'da kullanacağız (alias yerine ifade)
+    const exprId = "COALESCE(acc.id, fromAcc.id, toAcc.id)";
+    const exprName = "COALESCE(acc.name, fromAcc.name, toAcc.name)";
+    const exprCurrency = "COALESCE(acc.currency, fromAcc.currency, toAcc.currency)";
+
     const qb = this.txRepo.createQueryBuilder('t')
       .leftJoin('t.account', 'acc')
       .leftJoin('t.fromAccount', 'fromAcc')
       .leftJoin('t.toAccount', 'toAcc')
       .select([
-        // Öncelik: tek bir hesap kolonu üzerinden gruplayacağız
-        "COALESCE(acc.id, fromAcc.id, toAcc.id) AS account_id",
-        "COALESCE(acc.name, fromAcc.name, toAcc.name) AS account_name",
-        "COALESCE(acc.currency, fromAcc.currency, toAcc.currency) AS currency",
+        `${exprId} AS account_id`,
+        `${exprName} AS account_name`,
+        `${exprCurrency} AS currency`,
       ])
-      .addSelect(`
+      .addSelect(
+        `
         SUM(
           CASE
             WHEN t.type = 'INCOME'  AND acc.id      IS NOT NULL THEN CAST(t.amount AS NUMERIC)
@@ -37,20 +42,32 @@ export class ReportsService {
             ELSE 0
           END
         )
-      `, 'balance')
+        `,
+        'balance',
+      )
       .where('t.ownerId = :ownerId', { ownerId })
-      .groupBy('account_id')
-      .addGroupBy('account_name')
-      .addGroupBy('currency')
+      // !!! Alias yerine ifadenin kendisiyle group by
+      .groupBy(exprId)
+      .addGroupBy(exprName)
+      .addGroupBy(exprCurrency)
       .orderBy('account_name', 'ASC');
 
-    const rows = await qb.getRawMany<{ account_id: string; account_name: string; currency: string; balance: string }>();
-    return rows.map(r => ({
-      accountId: r.account_id,
-      name: r.account_name,
-      currency: r.currency,
-      balance: r.balance, // string (numeric)
-    }));
+    const rows = await qb.getRawMany<{
+      account_id: string | null;
+      account_name: string | null;
+      currency: string | null;
+      balance: string;
+    }>();
+
+    // Sadece gerçekten hesapla ilişkili satırları döndür (null hesapları ele)
+    return rows
+      .filter(r => r.account_id) // null olanları at
+      .map(r => ({
+        accountId: r.account_id as string,
+        name: r.account_name || '—',
+        currency: r.currency || 'TRY',
+        balance: r.balance,
+      }));
   }
 
   /**

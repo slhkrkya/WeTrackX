@@ -8,7 +8,7 @@ import { Transaction } from '../transactions/transaction.entity';
 export type AccountType = 'CASH' | 'BANK' | 'CARD' | 'WALLET';
 
 @Entity()
-@Index(['owner', 'name'], { unique: true }) // aynı kullanıcıda aynı isim tek olsun (isteğe bağlı)
+@Index(['owner', 'name'], { unique: true }) // aynı kullanıcıda aynı isim tek olsun 
 export class Account {
   @PrimaryGeneratedColumn('uuid')
   id: string;

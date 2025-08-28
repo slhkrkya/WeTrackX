@@ -10,12 +10,19 @@ export class TransactionsController {
 
   @Get()
   list(
-    @CurrentUser() u: { userId: string; email: string },
+    @CurrentUser() u: { userId: string },
     @Query('limit') limit?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('type') type?: 'INCOME' | 'EXPENSE' | 'TRANSFER',
+    @Query('accountId') accountId?: string,
+    @Query('categoryId') categoryId?: string,
+    @Query('q') q?: string,
   ) {
-    return this.tx.list({ id: u.userId } as any, Number(limit ?? 20), from, to);
+    return this.tx.list(
+      { id: u.userId } as any,
+      { limit: Number(limit ?? 20), from, to, type, accountId, categoryId, q },
+    );
   }
 
   @Post()
@@ -25,6 +32,7 @@ export class TransactionsController {
     dto:
       | {
           type: 'INCOME' | 'EXPENSE';
+          title: string;
           amount: number;
           currency?: string;
           date: string;
@@ -34,6 +42,7 @@ export class TransactionsController {
         }
       | {
           type: 'TRANSFER';
+          title: string;
           amount: number;
           currency?: string;
           date: string;

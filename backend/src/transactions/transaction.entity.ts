@@ -14,6 +14,12 @@ export class Transaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ type: 'varchar', length: 100 })
+  title: string;
+
+  @Column({ type: 'text', nullable: true })
+  note?: string; 
+  
   @Column({ type: 'varchar', length: 8 })
   type: TransactionType;
 
