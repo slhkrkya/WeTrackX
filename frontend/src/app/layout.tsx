@@ -1,6 +1,7 @@
 import AppShell from '@/components/AppShell';
 import './globals.css';
 import type { Metadata } from 'next';
+import ToastProvider from '@/components/ToastProvider';
 
 export const metadata: Metadata = {
   title: 'WeTrackX',
@@ -9,9 +10,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr">
+    <html lang="tr" data-theme="dark">
       <body>
-        <AppShell>{children}</AppShell>
+          <ToastProvider>
+            <AppShell>
+              {children}
+            </AppShell>
+          </ToastProvider>
       </body>
     </html>
   );

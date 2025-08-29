@@ -21,4 +21,11 @@ export class UsersService {
     const u = this.repo.create({ email, passwordHash, name });
     return this.repo.save(u);
   }
+
+  async updateProfile(userId: string, dto: Partial<{ name: string }>) {
+    const u = await this.repo.findOne({ where: { id: userId } });
+    if (!u) return null;
+    if (dto.name !== undefined) u.name = dto.name;
+    return this.repo.save(u);
+  }
 }

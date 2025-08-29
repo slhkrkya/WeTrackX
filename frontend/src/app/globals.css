@@ -1,35 +1,213 @@
+/* Tailwind v4 çekirdeği */
 @import "tailwindcss";
 
-/* Tailwind v4: Tema token'larını @theme ile tanımla */
+/* ──────────────────────────────────────────────────────────
+   1) TEMA DEĞİŞKENLERİ (Tailwind v4 @theme – design tokens)
+   - Buradaki isimler, doğrudan utility sınıfı üretir:
+     örn. bg-brand-500, text-positive-600, border-muted-300
+   - Dark modda .dark kökünde override ediyoruz.
+   Docs: https://tailwindcss.com/docs/theme , https://tailwindcss.com/blog/tailwindcss-v4
+   ────────────────────────────────────────────────────────── */
 @theme {
-  /* Renk token'ları -> bg-background, text-foreground kullanabilirsin */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  /* Font ailesi ve radius */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  --radius-sm: 0.375rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
 
-  /* Yazı tipleri -> font-sans, font-mono sınıfları */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  /* Breakpoint’ler (container util’de kullanacağız) */
+  --breakpoint-sm: 40rem;   /* 640px  */
+  --breakpoint-md: 48rem;   /* 768px  */
+  --breakpoint-lg: 64rem;   /* 1024px */
+  --breakpoint-xl: 80rem;   /* 1280px */
+
+  /* Gri / arayüz (muted) paleti */
+  --color-muted-50:  oklch(0.98 0.003 255);
+  --color-muted-100: oklch(0.97 0.006 255);
+  --color-muted-200: oklch(0.94 0.01 255);
+  --color-muted-300: oklch(0.88 0.015 255);
+  --color-muted-400: oklch(0.78 0.02 255);
+  --color-muted-500: oklch(0.7 0.02 255);
+  --color-muted-600: oklch(0.62 0.02 255);
+  --color-muted-700: oklch(0.55 0.02 255);
+  --color-muted-800: oklch(0.48 0.02 255);
+  --color-muted-900: oklch(0.4 0.02 255);
+
+  /* Marka renkleri (pastel fintech vibe) */
+  --color-brand-50:  oklch(0.97 0.02 270);
+  --color-brand-100: oklch(0.94 0.04 270);
+  --color-brand-200: oklch(0.9  0.06 270);
+  --color-brand-300: oklch(0.85 0.09 270);
+  --color-brand-400: oklch(0.8  0.12 270);
+  --color-brand-500: oklch(0.73 0.16 270); /* ana */
+  --color-brand-600: oklch(0.66 0.16 270);
+  --color-brand-700: oklch(0.58 0.16 270);
+  --color-brand-800: oklch(0.52 0.14 270);
+  --color-brand-900: oklch(0.45 0.12 270);
+
+  --color-accent-400: oklch(0.8  0.12 28);
+  --color-accent-500: oklch(0.74 0.14 28); /* coral */
+  --color-accent-600: oklch(0.66 0.14 28);
+
+  /* Durum renkleri (rapor/etiketler için) */
+  --color-positive-500: oklch(0.74 0.13 150);
+  --color-negative-500: oklch(0.62 0.14 22);
+  --color-warning-500:  oklch(0.85 0.12 95);
+  --color-info-500:     oklch(0.78 0.12 235);
+
+  /* Yüzey/foreground semantiği (bg-*, text-*) */
+  --color-background: oklch(0.99 0 0);
+  --color-foreground: oklch(0.2 0.03 255);
+  --color-card:       oklch(0.995 0 0);
+  --color-elevated:   oklch(0.985 0 0); /* hafif yükselti */
+  --color-border:     var(--color-muted-300);
+
+  /* Gölge ve halka */
+  --shadow-soft: 0 1px 2px 0 oklch(0 0 0 / 0.06), 0 8px 24px -8px oklch(0 0 0 / 0.12);
+  --shadow-pop:  0 6px 20px -6px oklch(0 0 0 / 0.22);
+  --ring-brand:  0 0 0 3px color-mix(in oklch, var(--color-brand-500) 35%, transparent);
 }
 
-/* Kendi CSS değişkenlerin */
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Dark tema override (class tabanlı) — v4 dark mode önerisi */
+:root.dark {
+  color-scheme: dark;
+  --color-background: oklch(0.16 0.02 255);
+  --color-foreground: oklch(0.98 0 0);
+  --color-card:       oklch(0.19 0.02 255);
+  --color-elevated:   oklch(0.22 0.02 255);
+  --color-border:     var(--color-muted-700);
+
+  /* brand/accents biraz koyulaşsın */
+  --color-brand-500:  oklch(0.72 0.16 270);
+  --color-accent-500: oklch(0.72 0.14 28);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-/* Global reset/temel */
+/* ──────────────────────────────────────────────────────────
+   2) BASE: tipografi, gövde, scrollbar, motion
+   Docs: https://tailwindcss.com/docs/dark-mode
+   ────────────────────────────────────────────────────────── */
+html, body { height: 100%; }
 body {
-  background: var(--background);
-  color: var(--foreground);
   font-family: var(--font-sans);
 }
 
-/* İstersen: token yerine doğrudan var() kullanmak için
-   bg-[var(--background)] / text-[var(--foreground)] yazabilirsin. */
+/* Gövdeyi temaya bağla */
+body { @apply bg-background text-foreground; }
+
+/* Yumuşak scrollbar (tema uyumlu) */
+* { scrollbar-width: thin; scrollbar-color: color-mix(in oklch, var(--color-muted-500) 60%, transparent) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: color-mix(in oklch, var(--color-muted-500) 60%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Hareket azaltma tercihine saygı */
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+/* ──────────────────────────────────────────────────────────
+   3) YARDIMCI UTILITIES (Tailwind v4 @utility)
+   - v3’teki @layer yerine v4’te @utility kullan.
+   Docs: Upgrade guide: container @utility örneği
+   https://tailwindcss.com/docs/upgrade-guide
+   ────────────────────────────────────────────────────────── */
+
+/* Container (orta hizalı, responsive padding) */
+@utility container {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  max-width: var(--breakpoint-lg);
+}
+@media (width >= var(--breakpoint-sm)) { .container { padding-inline: 1.25rem; } }
+@media (width >= var(--breakpoint-xl)) { .container { max-width: var(--breakpoint-xl); } }
+
+/* Kart yüzey */
+@utility card {
+  background-color: var(--color-card);
+  border: 1px solid oklch(from var(--color-border) l c h / 0.6);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+}
+@utility card-hover {
+  transition: transform .12s ease, box-shadow .12s ease, background-color .12s ease;
+}
+.card-hover:hover { transform: translateY(-2px); box-shadow: var(--shadow-pop); }
+
+/* Başlık ve alt başlık tipografisi */
+@utility h1 { @apply text-3xl md:text-4xl font-semibold tracking-tight; }
+@utility h2 { @apply text-2xl md:text-3xl font-semibold tracking-tight; }
+@utility h3 { @apply text-xl md:text-2xl font-semibold; }
+@utility subtext { @apply text-muted-600 dark:text-muted-400; }
+
+/* Buton ailesi */
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  height: 2.5rem;
+  padding-inline: 1rem;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+  line-height: 1;
+  border: 1px solid transparent;
+  transition: background-color .15s ease, color .15s ease, box-shadow .15s ease, transform .04s ease-in-out;
+}
+@utility btn-primary {
+  background: var(--color-brand-500);
+  color: white;
+}
+.btn-primary:hover { filter: brightness(0.95); }
+.btn-primary:focus-visible { box-shadow: var(--ring-brand); outline: none; }
+
+@utility btn-ghost {
+  background: transparent;
+  color: var(--color-foreground);
+  border-color: oklch(from var(--color-border) l c h / 0.5);
+}
+.btn-ghost:hover { background: oklch(from var(--color-muted-100) l c h / .6); }
+:root.dark .btn-ghost:hover { background: oklch(from var(--color-elevated) l c h / .9); }
+
+/* Input/Select/Textarea */
+@utility input {
+  display: inline-flex;
+  align-items: center;
+  height: 2.5rem;
+  width: 100%;
+  padding-inline: .875rem;
+  border-radius: var(--radius-md);
+  background: var(--color-elevated);
+  color: var(--color-foreground);
+  border: 1px solid oklch(from var(--color-border) l c h / .7);
+  transition: border-color .16s ease, box-shadow .16s ease, background-color .16s ease;
+}
+.input:focus { outline: none; box-shadow: var(--ring-brand); border-color: var(--color-brand-500); }
+
+/* Badge/Chip */
+@utility chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  height: 1.75rem;
+  padding-inline: .625rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  border: 1px solid oklch(from var(--color-border) l c h / .6);
+  background: var(--color-elevated);
+}
+
+/* Finans özel: gelir(+), gider(-) renklendirme  */
+@utility money-in  { color: var(--color-positive-500); }
+@utility money-out { color: var(--color-negative-500); }
+
+/* Form helper: hata metni */
+@utility form-error { @apply text-negative-500 text-sm; }
+
+/* Fokus için erişilebilir outline sıfırlama */
+:focus-visible { outline: none; }

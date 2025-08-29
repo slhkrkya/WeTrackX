@@ -30,7 +30,7 @@ cd WeTrackX
 ```
 
 ### 2) Veritabanını oluştur
-PostgreSQL’e bağlanıp boş bir veritabanı aç:
+PostgreSQL'e bağlanıp boş bir veritabanı aç:
 ```sql
 CREATE DATABASE wetrackx;
 ```
@@ -41,7 +41,7 @@ cd backend
 cp .env.example .env   # (yoksa dosyayı elle oluşturabilirsiniz)
 npm install
 npm run migration:run  # tabloları oluşturur
-npm run seed           # demo kullanıcıları ekler
+npm run seed           # sistem kategorilerini oluşturur
 npm run start:dev
 ```
 
@@ -77,31 +77,52 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 
 ---
 
-## Demo Kullanıcılar
-Seed script çalıştırıldığında aşağıdaki kullanıcılar oluşur:
-
-**Demo User**
-- Email: `demo@demo.com`
-- Şifre: `Demo123!`
-
-**Salih Karakaya**
-- Email: `salih@example.com`
-- Şifre: `12345678`
-
----
-
 ## Özellikler
 
-- Kullanıcı kayıt & giriş  
-- Hesap yönetimi (BANK, CASH, CARD, WALLET)  
-- Kategori yönetimi (INCOME, EXPENSE)  
-- İşlem ekleme (INCOME, EXPENSE, TRANSFER)  
-- İşlem listesi + filtreleme (tarih, tür, hesap, kategori, arama)  
-- Dashboard raporları:  
-  - Hesap bakiyeleri  
-  - Aylık gelir/gider grafiği  
-  - Gelir/Gider kategori toplamları  
-  - Son işlemler listesi  
+### 🔐 Kimlik Doğrulama
+- Kullanıcı kayıt & giriş
+- JWT tabanlı oturum yönetimi
+- "Beni hatırla" özelliği
+
+### 💰 Hesap Yönetimi
+- Hesap türleri: BANK, CASH, CARD, WALLET
+- Varsayılan para birimi: TL
+- Hesap bakiyesi takibi
+
+### 📊 Kategori Yönetimi
+- **Sistem Kategorileri** (Öntanımlı):
+  - 9 Gelir kategorisi (Maaş, Ek Gelir, Yatırım Geliri, vb.)
+  - 12 Gider kategorisi (Market, Ulaşım, Faturalar, vb.)
+  - Renk kodlaması ve öncelik sıralaması
+  - Düzenlenemez/silinemez
+
+- **Kullanıcı Kategorileri** (Özel):
+  - Kullanıcılar kendi kategorilerini oluşturabilir
+  - Renk seçimi ve öncelik ayarlama
+  - Düzenlenebilir/silinebilir
+
+### 💸 İşlem Yönetimi
+- İşlem türleri: INCOME, EXPENSE, TRANSFER
+- Kategori bazlı sınıflandırma
+- Hesap bazlı işlemler
+- Tarih ve tutar takibi
+
+### 📈 Raporlama
+- **Dashboard Raporları**:
+  - Hesap bakiyeleri
+  - Aylık gelir/gider grafiği (6 ay)
+  - Gelir/Gider kategori toplamları
+  - Son işlemler listesi
+  - Nakit akışı özeti
+
+- **API Raporları**:
+  - Özet: `/reports/summary?from&to`
+  - Kategori bazlı: `/reports/by-category?period=month&date=YYYY-MM`
+
+### 🔍 İşlem Listesi
+- Filtreleme (tarih, tür, hesap, kategori, arama)
+- Sayfalama ve sıralama
+- Detaylı işlem görüntüleme
 
 ---
 
@@ -109,8 +130,20 @@ Seed script çalıştırıldığında aşağıdaki kullanıcılar oluşur:
 ```bash
 WeTrackX/
   backend/      # NestJS API (port 4000)
+    src/
+      accounts/     # Hesap yönetimi
+      auth/         # Kimlik doğrulama
+      categories/   # Kategori yönetimi
+      reports/      # Raporlama
+      transactions/ # İşlem yönetimi
+      users/        # Kullanıcı yönetimi
   frontend/     # Next.js arayüz (port 3000)
+    src/
+      app/          # Sayfa bileşenleri
+      components/   # UI bileşenleri
+      lib/          # API ve yardımcı fonksiyonlar
 ```
+
 ---
 
 ## Production Build
@@ -133,8 +166,25 @@ npm run start:prod
 
 ---
 
-## Notlar
+## Teknik Detaylar
 
+### Para Birimi
+- Backend'de tüm işlemler **TL** para birimi ile yapılır
+- Frontend'de görüntüleme için **TRY** kullanılır (Intl.NumberFormat uyumluluğu)
+
+### Kategori Sistemi
+- Sistem kategorileri (`isSystem: true`) tüm kullanıcılar için mevcut
+- Kullanıcı kategorileri (`isSystem: false`) kişisel
+- Öncelik sırasına göre sıralama (yüksek öncelik üstte)
+
+### Güvenlik
+- Sistem kategorileri düzenlenemez/silinemez
+- Kullanıcılar sadece kendi verilerine erişebilir
+- JWT token tabanlı güvenlik
+
+### Notlar
 - Docker kullanılmamaktadır. PostgreSQL lokal kurulu olmalıdır.
-- `migration:run` ve `seed` sonrası demo kullanıcılarla giriş yapılabilir.
-- `NEXT_PUBLIC_API_BASE_URL` değeri backend’in çalıştığı URL’yi işaret etmelidir.
+- `migration:run` ve `seed` sonrası sistem kategorileri hazır olur.
+- Transactions API sayfalı cevap döner: `{ items, total, page, pageSize }`.
+- Categories API `type` parametresini kabul eder (INCOME/EXPENSE).
+- `NEXT_PUBLIC_API_BASE_URL` değeri backend'in çalıştığı URL'yi işaret etmelidir.

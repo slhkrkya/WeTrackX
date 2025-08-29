@@ -35,16 +35,17 @@ export class ReportsService {
         `
         SUM(
           CASE
-            WHEN t.type = 'INCOME'  AND acc.id      IS NOT NULL THEN CAST(t.amount AS NUMERIC)
-            WHEN t.type = 'EXPENSE' AND acc.id      IS NOT NULL THEN -CAST(t.amount AS NUMERIC)
-            WHEN t.type = 'TRANSFER' AND fromAcc.id IS NOT NULL THEN -CAST(t.amount AS NUMERIC)
-            WHEN t.type = 'TRANSFER' AND toAcc.id   IS NOT NULL THEN  CAST(t.amount AS NUMERIC)
+            WHEN t.type = 'INCOME'   AND acc.id      IS NOT NULL THEN CAST(t.amount AS NUMERIC)    -- + (pozitif)
+            WHEN t.type = 'EXPENSE'  AND acc.id      IS NOT NULL THEN CAST(t.amount AS NUMERIC)    -- + (zaten negatif)
+            WHEN t.type = 'TRANSFER' AND fromAcc.id  IS NOT NULL THEN -CAST(t.amount AS NUMERIC)   -- - (pozitif varsayımı)
+            WHEN t.type = 'TRANSFER' AND toAcc.id    IS NOT NULL THEN  CAST(t.amount AS NUMERIC)   -- + (pozitif varsayımı)
             ELSE 0
           END
         )
         `,
         'balance',
       )
+
       .where('t.ownerId = :ownerId', { ownerId })
       // !!! Alias yerine ifadenin kendisiyle group by
       .groupBy(exprId)
@@ -74,24 +75,30 @@ export class ReportsService {
    * Nakit akışı (tarih aralığına göre): toplam income, toplam expense, net.
    */
   async getCashflow(ownerId: string, from?: string, to?: string) {
-    const qb = this.txRepo.createQueryBuilder('t')
-      .select(`
-        SUM(CASE WHEN t.type = 'INCOME'  THEN CAST(t.amount AS NUMERIC) ELSE 0 END)
-      `, 'income')
-      .addSelect(`
-        SUM(CASE WHEN t.type = 'EXPENSE' THEN CAST(t.amount AS NUMERIC) ELSE 0 END)
-      `, 'expense')
-      .where('t.ownerId = :ownerId', { ownerId });
+  const qb = this.txRepo.createQueryBuilder('t')
+    .select(
+      `SUM(CASE WHEN t.type = 'INCOME' THEN CAST(t.amount AS NUMERIC) ELSE 0 END)`,
+      'income',
+    )
+    .addSelect(
+      `SUM(CASE WHEN t.type = 'EXPENSE' THEN CAST(t.amount AS NUMERIC) ELSE 0 END)`,
+      'expense',
+    )
+    .where('t.ownerId = :ownerId', { ownerId });
 
     if (from) qb.andWhere('t.date >= :from', { from });
-    if (to)   qb.andWhere('t.date <= :to',   { to   });
+    if (to)   qb.andWhere('t.date <= :to',   { to });
 
     const row = await qb.getRawOne<{ income: string; expense: string }>();
-    const income = row?.income ?? '0';
-    const expense = row?.expense ?? '0';
+    const incomeNum = Number(row?.income ?? 0);
+    const expenseSum = Number(row?.expense ?? 0); // NEGATİF toplam (EXPENSE)
 
-    // net = income - expense (transfer’ler nakit akışına dahil edilmez)
-    return { income, expense, net: (Number(income) - Number(expense)).toFixed(2) };
+    const net = incomeNum + expenseSum;           // ← kritik: TOPLAMA
+    return {
+      income: incomeNum.toFixed(2),
+      expense: Math.abs(expenseSum).toFixed(2),   // UI’da “Gider” pozitif gözüksün
+      net: net.toFixed(2),
+    };
   }
 
   /**

@@ -1,36 +1,40 @@
 import { api } from './api';
+import { type CategoryKind } from './types';
 
 export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
-export type CreateIncomeExpense = {
+export type UpsertIncomeExpense = {
   type: 'INCOME' | 'EXPENSE';
-  amount: number;           // pozitif sayı
-  currency?: string;        // default TRY
-  date: string;             // ISO
-  description?: string;
   title: string;
-  accountId: string;        // zorunlu
-  categoryId: string;       // zorunlu
+  amount: number;
+  currency?: string;        // default TRY
+  date: string;
+  description?: string;
+  accountId: string;
+  categoryId: string;
 };
 
-export type CreateTransfer = {
+export type UpsertTransfer = {
   type: 'TRANSFER';
-  amount: number;           // pozitif sayı
-  currency?: string;        // default TRY
-  date: string;             // ISO
-  description?: string;
   title: string;
-  fromAccountId: string;    // zorunlu
-  toAccountId: string;      // zorunlu
+  amount: number;
+  currency?: string;        // default TRY
+  date: string;
+  description?: string;
+  fromAccountId: string;
+  toAccountId: string;
 };
 export type TxListQuery = {
-  limit?: number;
+  page?: number;
+  pageSize?: number;
   from?: string;
   to?: string;
   type?: 'INCOME' | 'EXPENSE' | 'TRANSFER';
   accountId?: string;
   categoryId?: string;
   q?: string;
+  sort?: 'date' | 'amount';
+  order?: 'asc' | 'desc';
 };
 export type TxListItem = {
   id: string;
@@ -54,9 +58,11 @@ function qs(obj: Record<string, string | number | boolean | undefined>) {
 }
 
 export const TransactionsAPI = {
-  create: (payload: CreateIncomeExpense | CreateTransfer) =>
+  create: (payload: UpsertIncomeExpense | UpsertTransfer) =>
     api('/transactions', { method: 'POST', jsonBody: payload }),
 
   list: (query: TxListQuery = {}) =>
-    api<TxListItem[]>('/transactions' + qs(query)),
+    api<{ items: TxListItem[]; total: number; page: number; pageSize: number }>(
+      '/transactions' + qs(query)
+    ),
 };

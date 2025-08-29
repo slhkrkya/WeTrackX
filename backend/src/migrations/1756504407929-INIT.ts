@@ -1,13 +1,14 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class INIT1756397233505 implements MigrationInterface {
-    name = 'INIT1756397233505'
+export class INIT1756504407929 implements MigrationInterface {
+    name = 'INIT1756504407929'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "user" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "email" character varying NOT NULL, "passwordHash" character varying NOT NULL, "name" character varying NOT NULL DEFAULT '', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email"), CONSTRAINT "PK_cace4a159ff9f2512dd42373760" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "category" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "kind" character varying(8) NOT NULL, "color" character varying, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "parentId" uuid, "ownerId" uuid NOT NULL, CONSTRAINT "PK_9c4e4a89e3674fc9f382d733f03" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "category" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "kind" character varying(8) NOT NULL, "color" character varying, "priority" integer NOT NULL DEFAULT '0', "isSystem" boolean NOT NULL DEFAULT false, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "parentId" uuid, "ownerId" uuid, CONSTRAINT "PK_9c4e4a89e3674fc9f382d733f03" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE UNIQUE INDEX "IDX_7da8c13926d1ee4b87ef023f2d" ON "category" ("isSystem", "name", "kind") `);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_df13edef99b02ab688bb9fb692" ON "category" ("ownerId", "name", "kind") `);
-        await queryRunner.query(`CREATE TABLE "transaction" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "type" character varying(8) NOT NULL, "amount" numeric(14,2) NOT NULL, "currency" character varying(3) NOT NULL DEFAULT 'TRY', "date" TIMESTAMP WITH TIME ZONE NOT NULL, "description" text, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "accountId" uuid, "fromAccountId" uuid, "toAccountId" uuid, "categoryId" uuid, "ownerId" uuid NOT NULL, CONSTRAINT "PK_89eadb93a89810556e1cbcd6ab9" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "transaction" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "title" character varying(100) NOT NULL, "note" text, "type" character varying(8) NOT NULL, "amount" numeric(14,2) NOT NULL, "currency" character varying(3) NOT NULL DEFAULT 'TRY', "date" TIMESTAMP WITH TIME ZONE NOT NULL, "description" text, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "accountId" uuid, "fromAccountId" uuid, "toAccountId" uuid, "categoryId" uuid, "ownerId" uuid NOT NULL, CONSTRAINT "PK_89eadb93a89810556e1cbcd6ab9" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_cea3afc59b2249741b8b7c0b2c" ON "transaction" ("ownerId", "date") `);
         await queryRunner.query(`CREATE TABLE "account" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "type" character varying(16) NOT NULL DEFAULT 'BANK', "currency" character varying(3) NOT NULL DEFAULT 'TRY', "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), "ownerId" uuid NOT NULL, CONSTRAINT "PK_54115ee388cdb6d86bb4bf5b2ea" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE UNIQUE INDEX "IDX_dc22a1794ef075028191b801d3" ON "account" ("ownerId", "name") `);
@@ -35,6 +36,7 @@ export class INIT1756397233505 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_cea3afc59b2249741b8b7c0b2c"`);
         await queryRunner.query(`DROP TABLE "transaction"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_df13edef99b02ab688bb9fb692"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_7da8c13926d1ee4b87ef023f2d"`);
         await queryRunner.query(`DROP TABLE "category"`);
         await queryRunner.query(`DROP TABLE "user"`);
     }

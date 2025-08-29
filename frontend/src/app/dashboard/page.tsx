@@ -6,8 +6,16 @@ import BalanceCards from '@/components/dashboard/BalanceCards';
 import MonthlySeriesChart from '@/components/dashboard/MonthlySeriesChart';
 import CategoryTotals from '@/components/dashboard/CategoryTotals';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
-import { ReportsAPI, type BalanceItem, type MonthlyPoint, type CategoryTotal, type TxItem, type Cashflow } from '@/lib/reports';
+import {
+  ReportsAPI,
+  type BalanceItem,
+  type MonthlyPoint,
+  type CategoryTotal,
+  type TxItem,
+  type Cashflow,
+} from '@/lib/reports';
 import { clearAuth } from '@/lib/auth';
+import { fmtMoney } from '@/lib/format';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -24,7 +32,6 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        // basit paralel çağrılar
         const [b, s, ci, ce, r, cf] = await Promise.all([
           ReportsAPI.balances(),
           ReportsAPI.monthlySeries(6),
@@ -37,8 +44,13 @@ export default function DashboardPage() {
         setSeries(s);
         setCatIncome(ci);
         setCatExpense(ce);
-        setRecent(r);
+        setRecent(r.items);
         setCashflow(cf);
+        
+        // Hesap kontrolü - eğer hesap yoksa kullanıcıya bilgi ver
+        if (b.length === 0) {
+          setErr('Henüz hesabınız bulunmuyor. İşlem yapabilmek için önce hesap oluşturun.');
+        }
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
         router.replace('/auth/login');
@@ -61,60 +73,97 @@ export default function DashboardPage() {
     );
   }
 
+  // Para birimini balances'tan türet (yoksa TRY)
+  const baseCurrency = balances[0]?.currency ?? 'TRY';
+
   return (
     <main className="min-h-dvh p-6 space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Başlık + Aksiyon */}
+      <div className="reveal flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button onClick={onLogout} className="border rounded px-3 py-1.5 text-sm">Çıkış Yap</button>
+        <button onClick={onLogout} className="btn btn-outline h-9">
+          Çıkış Yap
+        </button>
       </div>
 
+      {/* Hata */}
       {err && (
-        <div className="text-sm border rounded p-3">{err}</div>
+        <div className="reveal card border border-[rgb(var(--error))]/30">
+          <p className="text-sm" style={{ color: 'rgb(var(--error))' }}>
+            {err}
+          </p>
+          {balances.length === 0 && (
+            <div className="mt-3">
+              <button 
+                onClick={() => router.push('/accounts/new')} 
+                className="btn btn-primary"
+              >
+                Hesap Oluştur
+              </button>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Hesap Bakiyeleri */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Hesap Bakiyeleri</h2>
-        <BalanceCards items={balances} />
+      <section className="reveal space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Hesap Bakiyeleri</h2>
+        <div className="card">
+          <BalanceCards items={balances} />
+        </div>
       </section>
 
       {/* Aylık Seri */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Aylık Seri (6 Ay)</h2>
-        <MonthlySeriesChart data={series} />
+      <section className="reveal space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Aylık Seri (6 Ay)</h2>
+        <div className="card">
+          <MonthlySeriesChart data={series} />
+        </div>
       </section>
 
       {/* Kategoriler */}
-      <section className="grid gap-4 lg:grid-cols-2">
-        <CategoryTotals title="Gelir Kategorileri" items={catIncome} />
-        <CategoryTotals title="Gider Kategorileri" items={catExpense} />
+      <section className="reveal grid gap-4 lg:grid-cols-2">
+        <div className="card">
+          <CategoryTotals title="Gelir Kategorileri" items={catIncome} currency={baseCurrency} />
+        </div>
+        <div className="card">
+          <CategoryTotals title="Gider Kategorileri" items={catExpense} currency={baseCurrency} />
+        </div>
       </section>
 
       {/* Nakit Akışı (özet) */}
       {cashflow && (
-        <section className="rounded-xl border p-4">
-          <h2 className="text-lg font-semibold mb-2">Nakit Akışı (Toplam)</h2>
-          <div className="grid grid-cols-3 gap-3 text-sm">
-            <div className="rounded-lg border p-3">
-              <div className="opacity-60">Gelir</div>
-              <div className="text-base font-semibold">{Number(cashflow.income).toFixed(2)}</div>
+        <section className="reveal card">
+          <h2 className="text-lg font-semibold mb-3 text-foreground">Nakit Akışı (Toplam)</h2>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="card p-4 text-center">
+              <div className="text-xs text-muted-foreground mb-1">Gelir</div>
+              <div className="text-lg font-bold money-in">
+                {fmtMoney(Number(cashflow.income), baseCurrency)}
+              </div>
             </div>
-            <div className="rounded-lg border p-3">
-              <div className="opacity-60">Gider</div>
-              <div className="text-base font-semibold">{Number(cashflow.expense).toFixed(2)}</div>
+            <div className="card p-4 text-center">
+              <div className="text-xs text-muted-foreground mb-1">Gider</div>
+              <div className="text-lg font-bold money-out">
+                {fmtMoney(Number(cashflow.expense), baseCurrency)}
+              </div>
             </div>
-            <div className="rounded-lg border p-3">
-              <div className="opacity-60">Net</div>
-              <div className="text-base font-semibold">{Number(cashflow.net).toFixed(2)}</div>
+            <div className="card p-4 text-center">
+              <div className="text-xs text-muted-foreground mb-1">Net</div>
+              <div className="text-lg font-bold">
+                {fmtMoney(Number(cashflow.net), baseCurrency)}
+              </div>
             </div>
           </div>
         </section>
       )}
 
       {/* Son İşlemler */}
-      <section className="space-y-3">
-        <h2 className="text-lg font-semibold">Son İşlemler</h2>
-        <RecentTransactions items={recent} />
+      <section className="reveal space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Son İşlemler</h2>
+        <div className="card">
+          <RecentTransactions items={recent} />
+        </div>
       </section>
     </main>
   );

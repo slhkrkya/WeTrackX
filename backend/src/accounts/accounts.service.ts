@@ -20,10 +20,11 @@ export class AccountsService {
   }
 
   async create(owner: User, dto: CreateAccountDto) {
+    const currency = dto.currency ?? 'TRY';
     const acc = this.repo.create({
       name: dto.name,
       type: dto.type ?? 'BANK',
-      currency: dto.currency ?? 'TRY',
+      currency: currency,
       // DeepPartial<User> beklentisine tam uysun diye owner'ı id ile veriyoruz
       owner: { id: owner.id } as any,
     });

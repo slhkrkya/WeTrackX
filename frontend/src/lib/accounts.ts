@@ -1,6 +1,5 @@
 import { api } from './api';
-
-export type AccountType = 'CASH' | 'BANK' | 'CARD' | 'WALLET';
+import { type AccountType } from './types';
 
 export type AccountDTO = {
   id: string;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { setAuth, type AuthUser } from '@/lib/auth';
@@ -18,88 +19,174 @@ function getErrorMessage(e: unknown) {
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('salih@example.com');
-  const [password, setPassword] = useState('12345678');
-  const [name, setName] = useState('Salih');
+
+  // Varsayılan değerler kaldırıldı
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>('');
 
+  // alan bazlı hatalar
+  const [nameErr, setNameErr] = useState<string>('');
+  const [emailErr, setEmailErr] = useState<string>('');
+  const [passwordErr, setPasswordErr] = useState<string>('');
+
+  function validate() {
+    let ok = true;
+
+    if (!name.trim()) {
+      setNameErr('Ad zorunlu');
+      ok = false;
+    } else if (name.trim().length < 2) {
+      setNameErr('Ad en az 2 karakter olmalı');
+      ok = false;
+    } else {
+      setNameErr('');
+    }
+
+    if (!email.trim()) {
+      setEmailErr('E-posta zorunlu');
+      ok = false;
+    } else {
+      setEmailErr('');
+    }
+
+    if (!password) {
+      setPasswordErr('Şifre zorunlu');
+      ok = false;
+    } else if (password.length < 8) {
+      setPasswordErr('Şifre en az 8 karakter olmalı');
+      ok = false;
+    } else {
+      setPasswordErr('');
+    }
+
+    return ok;
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
+    if (loading) return;
+
     setErr('');
+    if (!validate()) return;
+
+    setLoading(true);
     try {
       const res = await api<RegisterRes>('/auth/register', {
         method: 'POST',
-        jsonBody: { email, password, name },
+        jsonBody: { email: email.trim(), password, name: name.trim() },
       });
       setAuth(res.token, res.user);
       router.replace('/dashboard');
     } catch (e: unknown) {
       setErr(getErrorMessage(e));
-    } finally {
       setLoading(false);
     }
   }
 
   return (
     <main className="min-h-dvh flex items-center justify-center p-6">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-sm space-y-4 border rounded-xl p-5"
-      >
+      <form onSubmit={onSubmit} className="reveal w-full max-w-sm space-y-5 card" aria-busy={loading}>
         <h1 className="text-2xl font-bold">Kayıt Ol</h1>
 
-        {err && <div className="text-sm border rounded p-2">{err}</div>}
+        {err && (
+          <div className="card ring-1 ring-[rgb(var(--error))]/25" role="alert" aria-live="polite">
+            <p className="text-sm text-[rgb(var(--error))]">{err}</p>
+          </div>
+        )}
 
+        {/* Ad */}
         <div className="space-y-1">
-          <label className="text-sm">Ad</label>
+          <label htmlFor="name" className="label-soft">Ad</label>
           <input
-            className="w-full rounded border px-3 py-2"
+            id="name"
+            className="input"
             type="text"
             value={name}
             onChange={(ev) => setName(ev.target.value)}
+            onBlur={() => {
+              if (!name.trim()) setNameErr('Ad zorunlu');
+              else if (name.trim().length < 2) setNameErr('Ad en az 2 karakter olmalı');
+              else setNameErr('');
+            }}
             maxLength={64}
+            required
+            disabled={loading}
+            aria-invalid={!!nameErr}
+            aria-describedby={nameErr ? 'name-err' : undefined}
           />
+          {nameErr && <p id="name-err" className="text-xs text-[rgb(var(--error))]">{nameErr}</p>}
         </div>
 
+        {/* E-posta */}
         <div className="space-y-1">
-          <label className="text-sm">E-posta</label>
+          <label htmlFor="email" className="label-soft">E-posta</label>
           <input
-            className="w-full rounded border px-3 py-2"
+            id="email"
+            className="input"
             type="email"
             value={email}
             onChange={(ev) => setEmail(ev.target.value)}
-            autoComplete="email"
+            onBlur={() => {
+              if (!email.trim()) setEmailErr('E-posta zorunlu'); else setEmailErr('');
+            }}
+            autoComplete="off"
             required
+            disabled={loading}
+            aria-invalid={!!emailErr}
+            aria-describedby={emailErr ? 'email-err' : undefined}
           />
+          {emailErr && <p id="email-err" className="text-xs text-[rgb(var(--error))]">{emailErr}</p>}
         </div>
 
+        {/* Şifre */}
         <div className="space-y-1">
-          <label className="text-sm">Şifre</label>
-          <input
-            className="w-full rounded border px-3 py-2"
-            type="password"
-            value={password}
-            onChange={(ev) => setPassword(ev.target.value)}
-            autoComplete="new-password"
-            required
-            minLength={8}
-          />
+          <label htmlFor="password" className="label-soft">Şifre</label>
+          <div className="relative">
+            <input
+              id="password"
+              className="input pr-10"
+              type={showPw ? 'text' : 'password'}
+              value={password}
+              onChange={(ev) => setPassword(ev.target.value)}
+              onBlur={() => {
+                if (!password) setPasswordErr('Şifre zorunlu');
+                else if (password.length < 8) setPasswordErr('Şifre en az 8 karakter olmalı');
+                else setPasswordErr('');
+              }}
+              autoComplete="off"
+              required
+              minLength={8}
+              disabled={loading}
+              aria-invalid={!!passwordErr}
+              aria-describedby={passwordErr ? 'password-err' : undefined}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPw((v) => !v)}
+              className="absolute inset-y-0 right-0 px-3 text-sm label-soft hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] rounded-r-md"
+              aria-label={showPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
+              tabIndex={-1}
+            >
+              {showPw ? 'Gizle' : 'Göster'}
+            </button>
+          </div>
+          {passwordErr && <p id="password-err" className="text-xs text-[rgb(var(--error))]">{passwordErr}</p>}
         </div>
 
-        <button
-          disabled={loading}
-          className="w-full rounded px-4 py-2 border"
-        >
+        <button disabled={loading} className="btn btn-primary w-full" type="submit">
           {loading ? 'Gönderiliyor…' : 'Kayıt Ol'}
         </button>
 
-        <p className="text-sm">
+        <p className="text-sm label-soft">
           Zaten hesabın var mı?{' '}
-          <a className="underline" href="/auth/login">
+          <Link href="/auth/login" className="nav-link">
             Giriş yap
-          </a>
+          </Link>
         </p>
       </form>
     </main>

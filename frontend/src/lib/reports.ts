@@ -20,11 +20,12 @@ export type TxItem = {
 
 export const ReportsAPI = {
   balances: () => api<BalanceItem[]>('/reports/balances'),
-  cashflow: (from?: string, to?: string) => api<Cashflow>(`/reports/cashflow${buildRange(from, to)}`),
+  cashflow: (from?: string, to?: string) => api<Cashflow>(`/reports/summary${buildRange(from, to)}`),
   categoryTotals: (kind: 'INCOME' | 'EXPENSE', from?: string, to?: string) =>
     api<CategoryTotal[]>(`/reports/category-totals?kind=${kind}${rangeQuery(from, to)}`),
   monthlySeries: (months = 6) => api<MonthlyPoint[]>(`/reports/monthly-series?months=${months}`),
-  recentTransactions: (limit = 10) => api<TxItem[]>(`/transactions?limit=${limit}`),
+  recentTransactions: (limit = 10) => api<{ items: TxItem[]; total: number; page: number; pageSize: number }>(`/transactions?page=1&pageSize=${limit}`),
+  byCategory: (period: 'month', ym: string) => api<Array<CategoryTotal & { type: 'INCOME' | 'EXPENSE' }>>(`/reports/by-category?period=${period}&date=${encodeURIComponent(ym)}`),
 };
 
 function buildRange(from?: string, to?: string) {

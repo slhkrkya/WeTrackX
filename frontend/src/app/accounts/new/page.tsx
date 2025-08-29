@@ -1,95 +1,117 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AccountsAPI, type AccountType } from '@/lib/accounts';
+import { AccountsAPI } from '@/lib/accounts';
+import { type AccountType, ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
 
 const TYPES: AccountType[] = ['BANK', 'CASH', 'CARD', 'WALLET'];
 
-function normalizeCurrency(s: string) {
-  return s.trim().toUpperCase().slice(0, 3) || 'TRY';
-}
-
 export default function NewAccountPage() {
   const router = useRouter();
+
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('BANK');
-  const [currency, setCurrency] = useState('TRY');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>('');
 
+  // alan bazlı hatalar
+  const [nameErr, setNameErr] = useState('');
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
     setErr('');
+    setNameErr('');
+
+    if (!name.trim()) {
+      setNameErr('Hesap adı zorunlu');
+      return;
+    }
+
+    setLoading(true);
     try {
       const payload = {
         name: name.trim(),
         type,
-        currency: normalizeCurrency(currency),
+        currency: 'TRY', // Her zaman TRY olacak
       };
-      if (!payload.name) throw new Error('Hesap adı zorunlu');
       await AccountsAPI.create(payload);
       router.replace('/accounts');
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : String(e));
-    } finally {
       setLoading(false);
     }
   }
 
   return (
     <main className="min-h-dvh p-6 flex justify-center">
-      <form onSubmit={onSubmit} className="w-full max-w-md space-y-4 border rounded-xl p-5">
-        <h1 className="text-2xl font-bold">Yeni Hesap</h1>
-
-        {err && <div className="text-sm border rounded p-2">{err}</div>}
-
-        <div className="space-y-1">
-          <label className="text-sm">Ad</label>
-          <input
-            className="w-full rounded border px-3 py-2"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Vadesiz TL"
-            required
-          />
+      <form onSubmit={onSubmit} className="reveal w-full max-w-md space-y-5 card">
+        {/* Başlık */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Yeni Hesap</h1>
+          <Link href="/accounts" className="nav-link">Listeye Dön</Link>
         </div>
 
+        {/* Genel hata (sunucu/istek) */}
+        {err && (
+          <div
+            className="card ring-1 ring-[rgb(var(--error))]/25"
+            role="alert"
+          >
+            <p className="text-sm text-[rgb(var(--error))]">{err}</p>
+          </div>
+        )}
+
+        {/* Ad */}
         <div className="space-y-1">
-          <label className="text-sm">Tür</label>
+          <label htmlFor="name" className="label-soft">Ad</label>
+          <input
+            id="name"
+            className="input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={() => {
+              if (!nameErr && !name.trim()) setNameErr('Hesap adı zorunlu');
+              if (name.trim()) setNameErr('');
+            }}
+            placeholder="Vadesiz TL"
+            required
+            aria-invalid={!!nameErr}
+            aria-describedby={nameErr ? 'name-err' : undefined}
+          />
+          {nameErr && (
+            <p id="name-err" className="text-xs text-[rgb(var(--error))]">{nameErr}</p>
+          )}
+        </div>
+
+        {/* Tür */}
+        <div className="space-y-1">
+          <label htmlFor="type" className="label-soft">Tür</label>
           <select
-            className="w-full rounded border px-3 py-2 bg-transparent"
+            id="type"
+            className="input bg-transparent"
             value={type}
             onChange={(e) => setType(e.target.value as AccountType)}
           >
             {TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
+              <option key={t} value={t}>{ACCOUNT_TYPE_LABELS_TR[t]}</option>
             ))}
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm">Para Birimi</label>
-          <input
-            className="w-full rounded border px-3 py-2 uppercase"
-            value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
-            placeholder="TRY"
-            maxLength={3}
-          />
-          <p className="text-xs opacity-70">Örn: TRY, USD, EUR</p>
-        </div>
 
+
+        {/* Aksiyonlar */}
         <div className="flex items-center gap-2">
-          <button disabled={loading} className="rounded px-4 py-2 border">
+          <button
+            disabled={loading}
+            className="btn btn-primary"
+            type="submit"
+          >
             {loading ? 'Kaydediliyor…' : 'Kaydet'}
           </button>
-          <a href="/accounts" className="text-sm underline">
-            İptal
-          </a>
+          <Link href="/accounts" className="nav-link">İptal</Link>
         </div>
       </form>
     </main>
