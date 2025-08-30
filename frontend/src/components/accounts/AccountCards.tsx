@@ -7,6 +7,26 @@ import { AccountsAPI } from '@/lib/accounts';
 import { ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
 import Link from 'next/link';
+import React from 'react';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 type Props = { 
   items: AccountDTO[];
@@ -58,9 +78,160 @@ const accountCardStyles = {
   }
 };
 
+// Sürüklenebilir hesap kartı component'i
+function SortableAccountCard({ 
+  account, 
+  styles, 
+  isWallet, 
+  getBalanceForAccount, 
+  deleteAccount, 
+  deletingId 
+}: {
+  account: AccountDTO;
+  styles: any;
+  isWallet: boolean;
+  getBalanceForAccount: (id: string) => string;
+  deleteAccount: (id: string) => void;
+  deletingId: string | null;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ 
+    id: account.id,
+    transition: {
+      duration: 150,
+      easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: isDragging ? 'none' : transition,
+    opacity: isDragging ? 0.8 : 1,
+    zIndex: isDragging ? 999 : 'auto',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`snap-center shrink-0 w-full h-48 rounded-2xl shadow-lg 
+        ${styles.gradient} 
+        ${isWallet ? 'text-gray-800' : 'text-white'} 
+        p-6 flex flex-col justify-between relative overflow-hidden
+        hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1
+        cursor-grab active:cursor-grabbing
+        ${isDragging ? 'z-50' : ''}
+        will-change-transform`}
+    >
+      {/* Arka plan deseni */}
+      <div className={`absolute inset-0 ${styles.pattern} opacity-10`} style={{ backgroundSize: '50px' }}></div>
+      
+      {/* Dekoratif element */}
+      <div className={styles.decoration}></div>
+
+      {/* Sürükleme göstergesi */}
+      <div className="absolute top-2 right-2 w-6 h-6 bg-white/20 rounded-full flex items-center justify-center">
+        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+        </svg>
+      </div>
+
+      {/* Üst kısım - Hesap adı ve ikon */}
+      <div className="relative z-10">
+        <div className="flex justify-between items-start">
+          <h3 className="text-lg font-semibold truncate">{account.name}</h3>
+          <div className="flex-shrink-0">
+            {styles.icon}
+          </div>
+        </div>
+        <p className="text-sm opacity-80">{ACCOUNT_TYPE_LABELS_TR[account.type]}</p>
+      </div>
+
+      {/* Alt kısım - Bakiye ve işlemler */}
+      <div className="relative z-10">
+        <p className="text-2xl font-bold tracking-tight">
+          ₺{getBalanceForAccount(account.id)}
+        </p>
+        <p className="text-xs opacity-80">
+          Son güncelleme: {new Date(account.updatedAt).toLocaleDateString('tr-TR')}
+        </p>
+      </div>
+
+      {/* Aksiyon butonları - Hover'da görünür */}
+      <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+        <Link
+          href={`/accounts/${account.id}/edit`}
+          className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+          title="Düzenle"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+        </Link>
+        <button
+          onClick={() => deleteAccount(account.id)}
+          disabled={deletingId === account.id}
+          className="p-2 bg-red-500/80 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors disabled:opacity-50"
+          title="Sil"
+        >
+          {deletingId === account.id ? (
+            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function AccountCards({ items, balances, onDelete }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [orderedItems, setOrderedItems] = useState<AccountDTO[]>(items);
   const { show } = useToast();
+
+  // Sürükleme sensörleri - performans optimizasyonu
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // 8px hareket etmeden sürükleme başlamaz
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  // Sürükleme bittiğinde çağrılır
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      setOrderedItems((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over?.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
+
+  // items değiştiğinde orderedItems'ı güncelle
+  React.useEffect(() => {
+    setOrderedItems(items);
+  }, [items]);
 
   // Hesap için bakiye bulma fonksiyonu
   function getBalanceForAccount(accountId: string): string {
@@ -131,80 +302,63 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
 
   return (
     <div className="reveal space-y-6">
-      {/* Hesap Kartları Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {items.map((account) => {
-          const styles = accountCardStyles[account.type];
-          const isWallet = account.type === 'WALLET';
-          
-          return (
-            <div
-              key={account.id}
-              className={`snap-center shrink-0 w-full h-48 rounded-2xl shadow-lg 
-                ${styles.gradient} 
-                ${isWallet ? 'text-gray-800' : 'text-white'} 
-                p-6 flex flex-col justify-between relative overflow-hidden
-                hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
+      {/* Modern Hesap Kartları */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={orderedItems.map(item => item.id)} strategy={rectSortingStrategy}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {orderedItems.map((account) => {
+              const styles = accountCardStyles[account.type];
+              const isWallet = account.type === 'WALLET';
+              
+              return (
+                <SortableAccountCard
+                  key={account.id}
+                  account={account}
+                  styles={styles}
+                  isWallet={isWallet}
+                  getBalanceForAccount={getBalanceForAccount}
+                  deleteAccount={deleteAccount}
+                  deletingId={deletingId}
+                />
+              );
+            })}
+            
+            {/* Yeni Hesap Ekleme Kartı */}
+            <Link
+              href="/accounts/new"
+              className="snap-center shrink-0 w-full h-48 rounded-2xl shadow-lg 
+                bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20
+                border-2 border-dashed border-blue-300 dark:border-blue-600
+                p-6 flex flex-col items-center justify-center relative overflow-hidden
+                hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1
+                hover:border-blue-400 dark:hover:border-blue-500
+                group"
             >
               {/* Arka plan deseni */}
-              <div className={`absolute inset-0 ${styles.pattern} opacity-10`} style={{ backgroundSize: '50px' }}></div>
-              
-              {/* Dekoratif element */}
-              <div className={styles.decoration}></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-100/10 to-purple-100/10 opacity-20"></div>
 
-              {/* Üst kısım - Hesap adı ve ikon */}
-              <div className="relative z-10">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-lg font-semibold truncate">{account.name}</h3>
-                  <div className="flex-shrink-0">
-                    {styles.icon}
-                  </div>
-                </div>
-                <p className="text-sm opacity-80">{ACCOUNT_TYPE_LABELS_TR[account.type]}</p>
-              </div>
-
-              {/* Alt kısım - Bakiye ve işlemler */}
-              <div className="relative z-10">
-                <p className="text-2xl font-bold tracking-tight">
-                  ₺{getBalanceForAccount(account.id)}
-                </p>
-                <p className="text-xs opacity-80">
-                  Son işlem: {new Date(account.updatedAt).toLocaleDateString('tr-TR')}
-                </p>
-              </div>
-
-              {/* Aksiyon butonları - Hover'da görünür */}
-              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
-                <Link
-                  href={`/accounts/${account.id}/edit`}
-                  className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
-                  title="Düzenle"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              {/* İçerik */}
+              <div className="relative z-10 text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
-                </Link>
-                <button
-                  onClick={() => deleteAccount(account.id)}
-                  disabled={deletingId === account.id}
-                  className="p-2 bg-red-500/80 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors disabled:opacity-50"
-                  title="Sil"
-                >
-                  {deletingId === account.id ? (
-                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  )}
-                </button>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                  Yeni Hesap Ekle
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Finansal takibinize yeni hesap ekleyin
+                </p>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            </Link>
+          </div>
+        </SortableContext>
+      </DndContext>
 
       {/* Hesap Özeti */}
       <div className="card bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6">
