@@ -66,6 +66,14 @@ export class TransactionsController {
     return this.tx.update({ id: u.userId } as any, id, dto);
   }
 
+  @Get(':id')
+  get(
+    @CurrentUser() u: { userId: string },
+    @Param('id') id: string,
+  ) {
+    return this.tx.get({ id: u.userId } as any, id);
+  }
+
   @Delete(':id')
   remove(
     @CurrentUser() u: { userId: string },

@@ -184,6 +184,27 @@ export class TransactionsService {
     return this.repo.save(tx);
   }
 
+  async get(owner: User, id: string) {
+    const tx = await this.repo
+      .createQueryBuilder('t')
+      .leftJoin('t.account', 'account')
+      .leftJoin('t.fromAccount', 'fromAccount')
+      .leftJoin('t.toAccount', 'toAccount')
+      .leftJoin('t.category', 'category')
+      .addSelect([
+        'account.id', 'account.name',
+        'fromAccount.id', 'fromAccount.name',
+        'toAccount.id', 'toAccount.name',
+        'category.id', 'category.name',
+      ])
+      .where('t.id = :id', { id })
+      .andWhere('t.ownerId = :ownerId', { ownerId: (owner as any).id })
+      .getOne();
+
+    if (!tx) throw new NotFoundException('Transaction not found');
+    return tx;
+  }
+
   async remove(owner: User, id: string) {
     const tx = await this.repo.findOne({ where: { id, owner } });
     if (!tx) throw new NotFoundException('Transaction not found');

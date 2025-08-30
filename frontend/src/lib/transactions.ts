@@ -64,4 +64,10 @@ export const TransactionsAPI = {
     api<{ items: TxListItem[]; total: number; page: number; pageSize: number }>(
       '/transactions' + qs(query)
     ),
+  get: (id: string) =>
+    api<TxListItem>(`/transactions/${id}`),
+  update: (id: string, payload: Partial<UpsertIncomeExpense | UpsertTransfer>) =>
+    api(`/transactions/${id}`, { method: 'PATCH', jsonBody: payload }),
+  delete: (id: string) =>
+    api(`/transactions/${id}`, { method: 'DELETE' }),
 };

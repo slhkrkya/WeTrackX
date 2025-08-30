@@ -11,17 +11,19 @@ function LoadingSkeleton() {
   const rows = Array.from({ length: 4 });
   return (
     <div className="reveal card overflow-hidden">
-      <div className="hidden md:grid grid-cols-4 gap-2 px-4 py-2 text-[11px] label-soft">
+      <div className="hidden md:grid grid-cols-5 gap-2 px-4 py-2 text-[11px] label-soft">
         <div>Ad</div>
         <div>Tür</div>
         <div>Para Birimi</div>
         <div>Oluşturma</div>
+        <div className="text-right">İşlemler</div>
       </div>
       <ul className="divide-y">
         {rows.map((_, i) => (
-          <li key={i} className="grid md:grid-cols-4 grid-cols-2 gap-2 px-4 py-3">
-            <div className="col-span-2 md:col-span-1 h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-            <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+          <li key={i} className="grid md:grid-cols-5 grid-cols-1 gap-2 px-3 sm:px-4 py-3 sm:py-2">
+            <div className="h-6 sm:h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+            <div className="hidden md:block h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+            <div className="hidden md:block h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
             <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
             <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
           </li>
@@ -79,7 +81,12 @@ export default function AccountsPage() {
           Henüz hesap yok. Sağ üstten <span className="font-medium">“Yeni Hesap”</span> oluşturabilirsin.
         </div>
       ) : (
-        <AccountsList items={items} />
+        <AccountsList 
+          items={items} 
+          onDelete={(id) => {
+            setItems(items.filter(item => item.id !== id));
+          }}
+        />
       )}
     </main>
   );

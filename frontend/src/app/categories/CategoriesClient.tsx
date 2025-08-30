@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CategoriesAPI, type CategoryDTO } from '@/lib/categories';
 import { type CategoryKind, CATEGORY_KIND_LABELS_TR } from '@/lib/types';
+import { useToast } from '@/components/ToastProvider';
 
 const KINDS: CategoryKind[] = ['INCOME', 'EXPENSE'];
 
@@ -53,15 +54,17 @@ function LoadingSkeleton() {
   const rows = Array.from({ length: 6 });
   return (
     <div className="reveal card overflow-hidden">
-      <div className="hidden md:grid grid-cols-3 gap-2 px-4 py-2 text-[11px] label-soft">
+      <div className="hidden md:grid grid-cols-4 gap-2 px-4 py-2 text-[11px] label-soft">
         <div>Ad</div>
         <div>Tür</div>
         <div>Renk</div>
+        <div className="text-right">İşlemler</div>
       </div>
       <ul className="divide-y">
         {rows.map((_, i) => (
-          <li key={i} className="grid md:grid-cols-3 grid-cols-2 gap-2 px-4 py-3">
+          <li key={i} className="grid md:grid-cols-4 grid-cols-2 gap-2 px-4 py-3">
             <div className="col-span-2 md:col-span-1 h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+            <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
             <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
             <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
           </li>
@@ -74,12 +77,14 @@ function LoadingSkeleton() {
 export default function CategoriesClient() {
   const router = useRouter();
   const sp = useSearchParams();
+  const { show } = useToast();
   const initialKind = (sp.get('kind') as CategoryKind) || 'EXPENSE';
 
   const [kind, setKind] = useState<CategoryKind>(initialKind);
   const [items, setItems] = useState<CategoryDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string>('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // URL değişikliğini state'e yansıt (örn. geri/ileri)
   useEffect(() => {
@@ -113,6 +118,42 @@ export default function CategoriesClient() {
   function onChangeKind(k: CategoryKind) {
     // sadece URL'i değiştir; effect state'i güncelleyecek
     router.replace(`/categories?kind=${k}`);
+  }
+
+  // Kategori silme fonksiyonu
+  async function deleteCategory(id: string) {
+    const category = items.find(item => item.id === id);
+    const categoryName = category?.name || 'Kategori';
+    
+    if (!confirm(`${categoryName} kategorisini silmek istediğinizden emin misiniz?\n\n⚠️ Bu işlem geri alınamaz ve kategoriye ait tüm işlemler de etkilenecektir.`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      await CategoriesAPI.delete(id);
+      
+      // Başarılı silme sonrası listeyi yenile
+      setItems(items.filter(item => item.id !== id));
+      show(`${categoryName} kategorisi başarıyla silindi`, 'success');
+    } catch (error: any) {
+      let message = 'Kategori silinirken beklenmeyen bir hata oluştu';
+      
+      // Backend'den gelen hata mesajlarını kontrol et
+      if (error?.message?.includes('related transactions')) {
+        message = 'Bu kategoriye ait işlemler bulunduğu için silinemez. Önce işlemleri silin veya başka bir kategoriye taşıyın.';
+      } else if (error?.message?.includes('not found')) {
+        message = 'Kategori bulunamadı. Sayfayı yenileyip tekrar deneyin.';
+      } else if (error?.message?.includes('system')) {
+        message = 'Sistem kategorileri silinemez.';
+      } else if (error?.message) {
+        message = error.message;
+      }
+      
+      show(message, 'error');
+    } finally {
+      setDeletingId(null);
+    }
   }
 
   const headerPillColor = useMemo(
@@ -149,10 +190,11 @@ export default function CategoriesClient() {
       ) : (
         <div className="reveal card overflow-hidden" role="table" aria-label="Kategori listesi">
           {/* Başlık (md+) */}
-          <div className="hidden md:grid grid-cols-3 gap-2 px-4 py-2 text-[11px] label-soft" role="rowgroup">
+          <div className="hidden md:grid grid-cols-4 gap-2 px-4 py-2 text-[11px] label-soft" role="rowgroup">
             <div role="columnheader">Ad</div>
             <div role="columnheader">Tür</div>
             <div role="columnheader">Renk</div>
+            <div role="columnheader" className="text-right">İşlemler</div>
           </div>
 
           {items.length === 0 ? (
@@ -177,7 +219,7 @@ export default function CategoriesClient() {
                   key={c.id}
                   role="row"
                   className={[
-                    'grid md:grid-cols-3 grid-cols-2 gap-2 px-4 py-2 text-sm',
+                    'grid md:grid-cols-4 grid-cols-2 gap-2 px-4 py-2 text-sm',
                     'hover:bg-[rgb(var(--surface-1))]/60 transition-colors',
                     'focus-within:bg-[rgb(var(--surface-1))]/60',
                   ].join(' ')}
@@ -225,6 +267,39 @@ export default function CategoriesClient() {
                     ) : (
                       <span className="text-xs label-soft">—</span>
                     )}
+                  </div>
+
+                  {/* İşlemler */}
+                  <div role="cell" className="flex items-center justify-end gap-2 order-4 md:order-none">
+                    <div className="flex items-center gap-1 sm:gap-2">
+                      <Link
+                        href={`/categories/${c.id}/edit`}
+                        className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors rounded"
+                        title="Düzenle"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </Link>
+                      {!c.isSystem && (
+                        <button
+                          onClick={() => deleteCategory(c.id)}
+                          disabled={deletingId === c.id}
+                          className="p-1 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors disabled:opacity-50 rounded"
+                          title="Sil"
+                        >
+                          {deletingId === c.id ? (
+                            <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                          ) : (
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </li>
               ))}

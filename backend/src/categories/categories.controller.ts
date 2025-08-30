@@ -46,6 +46,14 @@ export class CategoriesController {
     return updated;
   }
 
+  @Get(':id')
+  get(
+    @CurrentUser() u: { userId: string; email: string },
+    @Param('id') id: string,
+  ) {
+    return this.categories.get({ id: u.userId } as any, id);
+  }
+
   @Delete(':id')
   async remove(
     @CurrentUser() u: { userId: string; email: string },

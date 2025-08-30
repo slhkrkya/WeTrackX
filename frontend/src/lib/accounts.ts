@@ -20,4 +20,10 @@ export const AccountsAPI = {
   list: () => api<AccountDTO[]>('/accounts'),
   create: (data: CreateAccountInput) =>
     api<AccountDTO>('/accounts', { method: 'POST', jsonBody: data }),
+  get: (id: string) =>
+    api<AccountDTO>(`/accounts/${id}`),
+  update: (id: string, data: Partial<CreateAccountInput>) =>
+    api<AccountDTO>(`/accounts/${id}`, { method: 'PATCH', jsonBody: data }),
+  delete: (id: string) =>
+    api(`/accounts/${id}`, { method: 'DELETE' }),
 };

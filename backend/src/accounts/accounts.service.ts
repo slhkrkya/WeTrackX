@@ -30,4 +30,33 @@ export class AccountsService {
     });
     return this.repo.save(acc);
   }
+
+  async get(owner: User, id: string) {
+    const acc = await this.repo.findOne({ where: { id, owner } });
+    if (!acc) throw new Error('Account not found');
+    return acc;
+  }
+
+  async update(owner: User, id: string, dto: Partial<CreateAccountDto>) {
+    const acc = await this.repo.findOne({ where: { id, owner } });
+    if (!acc) throw new Error('Account not found');
+    
+    if (dto.name !== undefined) acc.name = dto.name;
+    if (dto.type !== undefined) acc.type = dto.type;
+    if (dto.currency !== undefined) acc.currency = dto.currency;
+    
+    return this.repo.save(acc);
+  }
+
+  async remove(owner: User, id: string) {
+    const acc = await this.repo.findOne({ where: { id, owner } });
+    if (!acc) return null;
+    try {
+      await this.repo.remove(acc);
+      return true;
+    } catch (e: any) {
+      // Foreign key constraint (ilişkili transaction varsa)
+      throw e;
+    }
+  }
 }
