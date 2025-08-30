@@ -1,190 +1,416 @@
-# WeTrackX
+# WeTrackX - Kişisel Finans Takip Uygulaması
 
-Kullanıcıların kişisel finanslarını yönetebileceği, gelir ve giderlerini takip edebileceği, kategorize edebileceği ve raporlayabileceği bir web uygulaması.
+WeTrackX, kullanıcıların kişisel finanslarını yönetebileceği, gelir ve giderlerini takip edebileceği, kategorize edebileceği ve detaylı raporlar alabileceği modern bir web uygulamasıdır.
+
+## 🚀 Özellikler
+
+### 💰 Finansal Yönetim
+- **Hesap Yönetimi**: Banka, Nakit, Kart ve Cüzdan hesapları
+- **İşlem Takibi**: Gelir, gider ve transfer işlemleri
+- **Kategori Sistemi**: Sistem ve kullanıcı kategorileri
+- **Bakiye Takibi**: Gerçek zamanlı hesap bakiyeleri
+
+### 📊 Raporlama ve Analiz
+- **Dashboard**: Aylık gelir/gider grafikleri
+- **Kategori Raporları**: Gelir/gider dağılımı
+- **Nakit Akışı**: Detaylı finansal analiz
+- **İşlem Geçmişi**: Filtrelenebilir işlem listesi
+
+### 🔐 Güvenlik ve Kullanıcı Deneyimi
+- **JWT Kimlik Doğrulama**: Güvenli giriş/kayıt sistemi
+- **Profil Yönetimi**: Kullanıcı bilgileri ve şifre değiştirme
+- **Modern UI**: Responsive tasarım ve sürükle-bırak özellikleri
+- **Türkçe Arayüz**: Tam Türkçe dil desteği
 
 ---
 
-## Kullanılan Teknolojiler
+## 🛠️ Teknoloji Stack
 
-- **Backend:** NestJS, TypeORM  
-- **Frontend:** Next.js (App Router), TailwindCSS  
-- **Veritabanı:** PostgreSQL (lokal kurulum, Docker kullanılmıyor)  
-- **Kimlik Doğrulama:** JWT tabanlı register/login  
+### Backend
+- **Framework**: NestJS (Node.js)
+- **ORM**: TypeORM
+- **Veritabanı**: PostgreSQL
+- **Kimlik Doğrulama**: JWT
+- **Dil**: TypeScript
+
+### Frontend
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS
+- **Animasyonlar**: GSAP (GreenSock)
+- **Sürükle-Bırak**: @dnd-kit
+- **Dil**: TypeScript
 
 ---
 
-## Gereksinimler
+## 📋 Gereksinimler
 
-- Node.js 20+  
-- npm 10+  
-- PostgreSQL 15+  
+### Sistem Gereksinimleri
+- **Node.js**: 20.0.0 veya üzeri
+- **npm**: 10.0.0 veya üzeri
+- **PostgreSQL**: 15.0 veya üzeri
+- **Git**: En son sürüm
+
+### Önerilen Geliştirme Ortamı
+- **IDE**: Visual Studio Code
+- **Tarayıcı**: Chrome, Firefox, Safari, Edge
+- **İşletim Sistemi**: Windows 10+, macOS 10.15+, Ubuntu 20.04+
 
 ---
 
-## Kurulum Adımları
+## 🚀 Kurulum Adımları
 
-### 1) Depoyu klonla
+### 1. Projeyi İndirin
+
 ```bash
-git clone <repo-url> WeTrackX
+# GitHub'dan projeyi klonlayın
+git clone https://github.com/slhkrkya/WeTrackX.git
 cd WeTrackX
+
+# Veya ZIP olarak indirip açın
+# https://github.com/slhkrkya/WeTrackX/archive/main.zip
 ```
 
-### 2) Veritabanını oluştur
-PostgreSQL'e bağlanıp boş bir veritabanı aç:
-```sql
-CREATE DATABASE wetrackx;
-```
+### 2. Gerekli Yazılımları Yükleyin
 
-### 3) Backend kurulumu
+#### Node.js Kurulumu
 ```bash
+# Windows için: https://nodejs.org/en/download/
+# macOS için:
+brew install node
+
+# Ubuntu/Debian için:
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# Versiyon kontrolü
+node --version  # v20.x.x olmalı
+npm --version   # v10.x.x olmalı
+```
+
+#### PostgreSQL Kurulumu
+```bash
+# Windows için: https://www.postgresql.org/download/windows/
+# macOS için:
+brew install postgresql
+brew services start postgresql
+
+# Ubuntu/Debian için:
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+### 3. Veritabanını Hazırlayın
+
+```bash
+# PostgreSQL'e bağlanın
+sudo -u postgres psql
+
+# Veritabanını oluşturun
+CREATE DATABASE wetrackx;
+
+# Kullanıcı oluşturun (isteğe bağlı)
+CREATE USER wetrackx_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE wetrackx TO wetrackx_user;
+
+# Çıkış yapın
+\q
+```
+
+### 4. Backend Kurulumu
+
+```bash
+# Backend klasörüne gidin
 cd backend
-cp .env.example .env   # (yoksa dosyayı elle oluşturabilirsiniz)
+
+# Bağımlılıkları yükleyin
 npm install
-npm run migration:run  # tabloları oluşturur
-npm run seed           # sistem kategorilerini oluşturur
+
+# Ortam değişkenlerini ayarlayın
+cp .env.example .env
+# Veya .env dosyasını manuel oluşturun
+```
+
+#### Backend .env Dosyası
+```env
+# Veritabanı Bağlantısı
+DATABASE_URL=postgres://postgres:postgres@localhost:5432/wetrackx
+# Veya kullanıcı oluşturduysanız:
+# DATABASE_URL=postgres://wetrackx_user:your_password@localhost:5432/wetrackx
+
+# Uygulama Ayarları
+JWT_SECRET=your_super_secret_jwt_key_here
+PORT=4000
+
+# Geliştirme Ayarları
+NODE_ENV=development
+```
+
+```bash
+# Veritabanı tablolarını oluşturun
+npm run migration:run
+
+# Sistem kategorilerini yükleyin
+npm run seed
+
+# Geliştirme sunucusunu başlatın
 npm run start:dev
 ```
 
-**backend/.env örneği**
-```ini
-# PostgreSQL bağlantısı
-DATABASE_URL=postgres://postgres:postgres@localhost:5432/wetrackx
+**Backend başarıyla çalışıyor mu kontrol edin:**
+- http://localhost:4000/health adresine gidin
+- "OK" mesajı görmelisiniz
 
-# Uygulama ayarları
-JWT_SECRET=supersecret
-PORT=4000
-```
+### 5. Frontend Kurulumu
 
-### 4) Frontend kurulumu
-Yeni bir terminal penceresinde:
 ```bash
+# Yeni bir terminal penceresi açın
+# Proje ana dizinine gidin
+cd WeTrackX
+
+# Frontend klasörüne gidin
 cd frontend
-cp .env.example .env.local   # (yoksa dosyayı elle oluşturabilirsiniz)
+
+# Bağımlılıkları yükleyin
 npm install
-npm run dev
+
+# Ortam değişkenlerini ayarlayın
+cp .env.example .env.local
+# Veya .env.local dosyasını manuel oluşturun
 ```
 
-**frontend/.env.local örneği**
-```ini
+#### Frontend .env.local Dosyası
+```env
+# Backend API URL'si
 NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ```
 
-### 5) Çalıştırma
-- Frontend: http://localhost:3000  
-- Backend API: http://localhost:4000
-
-> Geliştirme ortamında backend ve frontend'i ayrı terminallerde çalıştırın.
-
----
-
-## Özellikler
-
-### 🔐 Kimlik Doğrulama
-- Kullanıcı kayıt & giriş
-- JWT tabanlı oturum yönetimi
-- "Beni hatırla" özelliği
-
-### 💰 Hesap Yönetimi
-- Hesap türleri: BANK, CASH, CARD, WALLET
-- Varsayılan para birimi: TL
-- Hesap bakiyesi takibi
-
-### 📊 Kategori Yönetimi
-- **Sistem Kategorileri** (Öntanımlı):
-  - 9 Gelir kategorisi (Maaş, Ek Gelir, Yatırım Geliri, vb.)
-  - 12 Gider kategorisi (Market, Ulaşım, Faturalar, vb.)
-  - Renk kodlaması ve öncelik sıralaması
-  - Düzenlenemez/silinemez
-
-- **Kullanıcı Kategorileri** (Özel):
-  - Kullanıcılar kendi kategorilerini oluşturabilir
-  - Renk seçimi ve öncelik ayarlama
-  - Düzenlenebilir/silinebilir
-
-### 💸 İşlem Yönetimi
-- İşlem türleri: INCOME, EXPENSE, TRANSFER
-- Kategori bazlı sınıflandırma
-- Hesap bazlı işlemler
-- Tarih ve tutar takibi
-
-### 📈 Raporlama
-- **Dashboard Raporları**:
-  - Hesap bakiyeleri
-  - Aylık gelir/gider grafiği (6 ay)
-  - Gelir/Gider kategori toplamları
-  - Son işlemler listesi
-  - Nakit akışı özeti
-
-- **API Raporları**:
-  - Özet: `/reports/summary?from&to`
-  - Kategori bazlı: `/reports/by-category?period=month&date=YYYY-MM`
-
-### 🔍 İşlem Listesi
-- Filtreleme (tarih, tür, hesap, kategori, arama)
-- Sayfalama ve sıralama
-- Detaylı işlem görüntüleme
-
----
-
-## Proje Yapısı
 ```bash
+# Geliştirme sunucusunu başlatın
+npm run dev
+```
+
+**Frontend başarıyla çalışıyor mu kontrol edin:**
+- http://localhost:3000 adresine gidin
+- WeTrackX ana sayfasını görmelisiniz
+
+---
+
+## 🎯 İlk Kullanım
+
+### 1. Hesap Oluşturun
+- http://localhost:3000 adresine gidin
+- "Kayıt Ol" butonuna tıklayın
+- Gerekli bilgileri doldurun
+
+### 2. İlk Hesabınızı Ekleyin
+- Dashboard'a giriş yapın
+- "Hesap Ekle" butonuna tıklayın
+- Hesap türünü seçin (Banka, Nakit, Kart, Cüzdan)
+
+### 3. İlk İşleminizi Kaydedin
+- "İşlem Ekle" butonuna tıklayın
+- Gelir veya gider işlemi oluşturun
+- Kategori seçin ve kaydedin
+
+---
+
+## 🏗️ Proje Yapısı
+
+```
 WeTrackX/
-  backend/      # NestJS API (port 4000)
-    src/
-      accounts/     # Hesap yönetimi
-      auth/         # Kimlik doğrulama
-      categories/   # Kategori yönetimi
-      reports/      # Raporlama
-      transactions/ # İşlem yönetimi
-      users/        # Kullanıcı yönetimi
-  frontend/     # Next.js arayüz (port 3000)
-    src/
-      app/          # Sayfa bileşenleri
-      components/   # UI bileşenleri
-      lib/          # API ve yardımcı fonksiyonlar
+├── backend/                 # NestJS Backend
+│   ├── src/
+│   │   ├── accounts/       # Hesap yönetimi
+│   │   ├── auth/          # Kimlik doğrulama
+│   │   ├── categories/    # Kategori yönetimi
+│   │   ├── reports/      # Raporlama
+│   │   ├── transactions/ # İşlem yönetimi
+│   │   └── users/        # Kullanıcı yönetimi
+│   ├── package.json
+│   └── .env
+├── frontend/               # Next.js Frontend
+│   ├── src/
+│   │   ├── app/          # Sayfa bileşenleri
+│   │   ├── components/   # UI bileşenleri
+│   │   └── lib/         # API ve yardımcı fonksiyonlar
+│   ├── package.json
+│   └── .env.local
+└── README.md
 ```
 
 ---
 
-## Production Build
+## 🔧 Geliştirme Komutları
 
-**Frontend (Next.js)**
-```bash
-cd frontend
-npm run build
-npm run start
-# varsayılan port: 3000
-```
-
-**Backend (NestJS)**
+### Backend Komutları
 ```bash
 cd backend
+
+# Geliştirme sunucusu
+npm run start:dev
+
+# Production build
 npm run build
 npm run start:prod
-# .env içindeki PORT=4000 kullanılacaktır
+
+# Veritabanı işlemleri
+npm run migration:generate -- src/migrations/MigrationName
+npm run migration:run
+npm run migration:revert
+
+# Seed verileri
+npm run seed
+
+# Test
+npm run test
+npm run test:e2e
+```
+
+### Frontend Komutları
+```bash
+cd frontend
+
+# Geliştirme sunucusu
+npm run dev
+
+# Production build
+npm run build
+npm run start
+
+# Linting
+npm run lint
+
+# Type checking
+npm run type-check
 ```
 
 ---
 
-## Teknik Detaylar
+## 🐛 Sorun Giderme
 
-### Para Birimi
-- Backend'de tüm işlemler **TL** para birimi ile yapılır
-- Frontend'de görüntüleme için **TRY** kullanılır (Intl.NumberFormat uyumluluğu)
+### Yaygın Sorunlar
 
-### Kategori Sistemi
-- Sistem kategorileri (`isSystem: true`) tüm kullanıcılar için mevcut
-- Kullanıcı kategorileri (`isSystem: false`) kişisel
-- Öncelik sırasına göre sıralama (yüksek öncelik üstte)
+#### 1. "Port 4000 is already in use"
+```bash
+# Windows
+netstat -ano | findstr :4000
+taskkill /PID <PID> /F
 
-### Güvenlik
-- Sistem kategorileri düzenlenemez/silinemez
-- Kullanıcılar sadece kendi verilerine erişebilir
-- JWT token tabanlı güvenlik
+# macOS/Linux
+lsof -ti:4000 | xargs kill -9
+```
 
-### Notlar
-- Docker kullanılmamaktadır. PostgreSQL lokal kurulu olmalıdır.
-- `migration:run` ve `seed` sonrası sistem kategorileri hazır olur.
-- Transactions API sayfalı cevap döner: `{ items, total, page, pageSize }`.
-- Categories API `type` parametresini kabul eder (INCOME/EXPENSE).
-- `NEXT_PUBLIC_API_BASE_URL` değeri backend'in çalıştığı URL'yi işaret etmelidir.
+#### 2. "Port 3000 is already in use"
+```bash
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+
+# macOS/Linux
+lsof -ti:3000 | xargs kill -9
+```
+
+#### 3. "Database connection failed"
+```bash
+# PostgreSQL servisinin çalıştığını kontrol edin
+# Windows
+services.msc  # PostgreSQL servisini bulun
+
+# macOS
+brew services list | grep postgresql
+
+# Ubuntu
+sudo systemctl status postgresql
+```
+
+#### 4. "Module not found" hataları
+```bash
+# Backend için
+cd backend
+rm -rf node_modules package-lock.json
+npm install
+
+# Frontend için
+cd frontend
+rm -rf node_modules package-lock.json
+npm install
+```
+
+#### 5. "Migration failed"
+```bash
+cd backend
+npm run migration:revert
+npm run migration:run
+```
+
+### Log Dosyaları
+```bash
+# Backend logları
+cd backend
+npm run start:dev  # Console'da görünür
+
+# Frontend logları
+cd frontend
+npm run dev  # Console'da görünür
+```
+
+---
+
+## 📦 Production Deployment
+
+### Backend Deployment
+```bash
+cd backend
+
+# Production build
+npm run build
+
+# Environment variables
+# DATABASE_URL, JWT_SECRET, PORT ayarlayın
+
+# Start production server
+npm run start:prod
+```
+
+### Frontend Deployment
+```bash
+cd frontend
+
+# Production build
+npm run build
+
+# Start production server
+npm run start
+
+# Veya Vercel/Netlify gibi platformlarda deploy edin
+```
+
+---
+
+## 🤝 Katkıda Bulunma
+
+1. Fork yapın
+2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
+3. Commit yapın (`git commit -m 'Add amazing feature'`)
+4. Push yapın (`git push origin feature/amazing-feature`)
+5. Pull Request oluşturun
+
+---
+
+## 📄 Lisans
+
+Bu proje MIT lisansı altında lisanslanmıştır.
+
+---
+
+## 📞 Destek
+
+- **GitHub Issues**: [Proje Issues Sayfası](https://github.com/slhkrkya/WeTrackX/issues)
+- **Email**: slhkrkyh@gmail.com
+- **Dokümantasyon**: [Wiki Sayfası](https://github.com/slhkrkya/WeTrackX/wiki)
+
+---
+
+**Not**: Bu README dosyası projenin güncel durumunu yansıtmaktadır. Herhangi bir sorun yaşarsanız lütfen GitHub Issues sayfasından bildirin.
