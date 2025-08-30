@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
-import { setAuth, type AuthUser } from '@/lib/auth';
+import { setAuth, type AuthUser, isAuthenticated } from '@/lib/auth';
 import { useToast } from '@/components/ToastProvider';
 
 type RegisterRes = { user: AuthUser; token: string };
@@ -38,6 +38,13 @@ export default function RegisterPage() {
   const [emailErr, setEmailErr] = useState<string>('');
   const [passwordErr, setPasswordErr] = useState<string>('');
   const [confirmPasswordErr, setConfirmPasswordErr] = useState<string>('');
+
+  // Auth kontrolü - giriş yapmış kullanıcıyı dashboard'a yönlendir
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.replace('/dashboard');
+    }
+  }, [router]);
 
   // Şifre değiştiğinde tekrar alanını kontrol et
   useEffect(() => {

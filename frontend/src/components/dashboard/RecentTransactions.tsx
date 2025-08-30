@@ -11,20 +11,33 @@ const KIND_LABELS_TR: Record<TxItem['type'], string> = {
   TRANSFER: 'Transfer',
 };
 
-const typeStyles: Record<TxItem['type'], { text: string }> = {
-  INCOME:   { text: 'text-[rgb(var(--success))]' },
-  EXPENSE:  { text: 'text-[rgb(var(--error))]' },
-  TRANSFER: { text: 'text-[rgb(var(--accent))]' },
+const typeStyles = {
+  INCOME:   { 
+    text: 'text-green-600 dark:text-green-400',
+    bg: 'bg-green-50 dark:bg-green-900/20',
+    border: 'border-green-200 dark:border-green-800'
+  },
+  EXPENSE:  { 
+    text: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-900/20',
+    border: 'border-red-200 dark:border-red-800'
+  },
+  TRANSFER: { 
+    text: 'text-blue-600 dark:text-blue-400',
+    bg: 'bg-blue-50 dark:bg-blue-900/20',
+    border: 'border-blue-200 dark:border-blue-800'
+  },
 };
 
 function TypePill({ type }: { type: TxItem['type'] }) {
-  const clr = typeStyles[type]?.text ?? '';
+  const style = typeStyles[type] ?? typeStyles.INCOME;
   return (
     <span
       className={[
-        'pill text-[11px] h-6 px-2',
-        'bg-elevated',
-        clr,
+        'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border',
+        style.bg,
+        style.text,
+        style.border,
       ].join(' ')}
     >
       {KIND_LABELS_TR[type]}

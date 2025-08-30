@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UsersAPI } from '@/lib/users';
 import { useToast } from '@/components/ToastProvider';
+import { clearAuth } from '@/lib/auth';
 
 export default function ChangePasswordClient() {
   const router = useRouter();
@@ -97,8 +98,14 @@ export default function ChangePasswordClient() {
         newPassword: formData.newPassword,
       });
 
-      show('Şifreniz başarıyla değiştirildi', 'success');
-      router.push('/profile');
+      show('Şifreniz başarıyla değiştirildi. Güvenlik nedeniyle çıkış yapılıyor...', 'success');
+      
+      // Kısa bir gecikme ile çıkış yap (kullanıcının mesajı görmesi için)
+      setTimeout(() => {
+        clearAuth();
+        router.replace('/');
+      }, 2000);
+      
     } catch (error: any) {
       const message = error?.message || 'Şifre değiştirilirken hata oluştu';
       show(message, 'error');
@@ -180,12 +187,12 @@ export default function ChangePasswordClient() {
               </button>
             </div>
             {oldPasswordErr && (
-              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-1 text-red-500 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {oldPasswordErr}
-              </p>
+              </div>
             )}
           </div>
 
@@ -220,26 +227,24 @@ export default function ChangePasswordClient() {
                 )}
               </button>
             </div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">En az 6 karakter olmalıdır</div>
             {newPasswordErr && (
-              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="flex items-center gap-1 text-red-500 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 {newPasswordErr}
-              </p>
+              </div>
             )}
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              En az 6 karakter olmalıdır
-            </p>
           </div>
 
-          {/* Şifre Tekrar */}
+          {/* Yeni Şifre Tekrar */}
           <div className="space-y-1">
             <label className="subtext">Yeni Şifre (Tekrar)</label>
             <div className="relative">
               <input
                 type={showConfirmPassword ? 'text' : 'password'}
-                className={`input pr-10 ${confirmPasswordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`input pr-10 ${confirmPasswordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : formData.confirmPassword && formData.newPassword === formData.confirmPassword ? 'border-green-500 focus:border-green-500 focus:ring-green-500' : ''}`}
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
                 placeholder="Yeni şifrenizi tekrar girin"
@@ -264,37 +269,48 @@ export default function ChangePasswordClient() {
                 )}
               </button>
             </div>
-            {confirmPasswordErr && (
-              <p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                {confirmPasswordErr}
-              </p>
-            )}
-            {formData.newPassword && formData.confirmPassword && !confirmPasswordErr && (
-              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {formData.confirmPassword && formData.newPassword === formData.confirmPassword && !confirmPasswordErr && (
+              <div className="flex items-center gap-1 text-green-500 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
                 Şifreler eşleşiyor
-              </p>
+              </div>
+            )}
+            {confirmPasswordErr && (
+              <div className="flex items-center gap-1 text-red-500 text-sm">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {confirmPasswordErr}
+              </div>
             )}
           </div>
         </div>
 
-        <div className="flex gap-2 pt-4">
+        {/* Buttons */}
+        <div className="flex gap-3 pt-4">
           <button
             type="submit"
+            className="btn btn-primary flex-1"
             disabled={saving}
-            className="btn btn-primary"
           >
-            {saving ? 'Değiştiriliyor...' : 'Şifreyi Değiştir'}
+            {saving ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Değiştiriliyor...
+              </>
+            ) : (
+              'Şifreyi Değiştir'
+            )}
           </button>
           <button
             type="button"
             onClick={() => router.push('/profile')}
             className="btn btn-ghost"
+            disabled={saving}
           >
             İptal
           </button>

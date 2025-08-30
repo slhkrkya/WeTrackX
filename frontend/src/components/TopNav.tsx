@@ -21,6 +21,7 @@ export default function TopNav() {
   const [open, setOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   // /transactions altında her alt sayfayı aktif say
   function isActive(href: string) {
@@ -31,16 +32,23 @@ export default function TopNav() {
 
   function onLogout() {
     clearAuth();
-    router.replace('/auth/login');
+    router.replace('/'); // Anasayfaya yönlendir
   }
+
+  // Hydration sorununu önlemek için mounted state'i
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Scroll gölgesi (okunabilirlik için)
   useEffect(() => {
+    if (!mounted) return;
+    
     const onScroll = () => setScrolled(window.scrollY > 4);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  }, [mounted]);
 
   // Route değişince mobil menüyü kapat
   useEffect(() => {
@@ -62,19 +70,19 @@ export default function TopNav() {
 
   return (
     <header
-      data-scrolled={scrolled ? 'true' : 'false'}
+      data-scrolled={mounted && scrolled ? 'true' : 'false'}
       className={[
         'sticky top-0 z-40',
-        'backdrop-blur supports-[backdrop-filter]:bg-[rgb(var(--card))]/60',
-        'bg-[rgb(var(--card))]/80',
-        'border-b border-black/10',
+        'backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:bg-gray-900/80',
+        'bg-white/90 dark:bg-gray-900/90',
+        'border-b border-gray-200 dark:border-gray-700',
         // scroll olduğunda gölgeyi güçlendir
-        'data-[scrolled=true]:shadow-sm',
+        'data-[scrolled=true]:shadow-lg data-[scrolled=true]:shadow-blue-500/10',
       ].join(' ')}
     >
-      <div className="mx-auto max-w-6xl px-4 py-2 flex items-center gap-3">
+      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
         {/* Brand */}
-        <Link href="/dashboard" className="font-semibold text-lg tracking-tight">
+        <Link href="/" className="font-bold text-xl tracking-tight gradient-text">
           WeTrackX
         </Link>
 
@@ -91,23 +99,16 @@ export default function TopNav() {
                 key={n.href}
                 href={n.href}
                 className={[
-                  'nav-link relative',
-                  active ? 'nav-link-active text-foreground' : 'text-muted-foreground',
+                  'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                  active 
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md' 
+                    : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white',
                   // focus-visible a11y
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-[rgb(var(--card))]',
+                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2',
                 ].join(' ')}
                 aria-current={active ? 'page' : undefined}
               >
-                <span className="px-3 py-2 inline-block">{n.label}</span>
-                {/* Active indicator */}
-                <span
-                  aria-hidden="true"
-                  className={[
-                    'pointer-events-none absolute left-2 right-2 -bottom-[2px] h-[2px] rounded-full',
-                    active ? 'bg-[hsl(var(--primary))] opacity-100' : 'opacity-0',
-                    'transition-opacity',
-                  ].join(' ')}
-                />
+                {n.label}
               </Link>
             );
           })}
@@ -116,124 +117,110 @@ export default function TopNav() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Actions */}
-        <div className="hidden md:flex items-center gap-2">
-          {/* Profil Dropdown */}
-          <div className="relative profile-dropdown">
-            <button
-              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-              className={[
-                'btn btn-outline h-9 px-3 flex items-center gap-2',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]',
-                isActive('/profile') ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))]' : '',
-              ].join(' ')}
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Profile Dropdown */}
+        <div className="hidden md:block relative profile-dropdown">
+          <button
+            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          >
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              Profil
-              <svg className={`w-4 h-4 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            </div>
+            <span>Profil</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
-            {/* Dropdown Menu */}
-            {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-[rgb(var(--card))] border border-black/10 rounded-lg shadow-lg py-1 z-50">
-                <Link
-                  href="/profile"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  onClick={() => setProfileDropdownOpen(false)}
-                >
-                  Profil Bilgileri
-                </Link>
-                <Link
-                  href="/profile/edit"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  onClick={() => setProfileDropdownOpen(false)}
-                >
-                  Profil Düzenle
-                </Link>
-                <Link
-                  href="/profile/change-password"
-                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  onClick={() => setProfileDropdownOpen(false)}
-                >
-                  Şifre Değiştir
-                </Link>
-                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
-                <button
-                  onClick={onLogout}
-                  className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Çıkış Yap
-                </button>
-              </div>
-            )}
-          </div>
+          {profileDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1">
+              <Link
+                href="/profile"
+                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setProfileDropdownOpen(false)}
+              >
+                Profil Bilgileri
+              </Link>
+              <Link
+                href="/profile/edit"
+                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setProfileDropdownOpen(false)}
+              >
+                Profil Düzenle
+              </Link>
+              <Link
+                href="/profile/change-password"
+                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                onClick={() => setProfileDropdownOpen(false)}
+              >
+                Şifre Değiştir
+              </Link>
+              <hr className="my-1 border-gray-200 dark:border-gray-700" />
+              <button
+                onClick={() => {
+                  setProfileDropdownOpen(false);
+                  onLogout();
+                }}
+                className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              >
+                Çıkış Yap
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Mobile toggler */}
+        {/* Mobile menu button */}
         <button
-          className="md:hidden btn btn-outline h-9 px-3"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(!open)}
+          className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
           aria-label="Menüyü aç/kapat"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
         >
-          Menü
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
         </button>
       </div>
 
       {/* Mobile menu */}
-      <div
-        id="mobile-nav"
-        data-open={open ? 'true' : 'false'}
-        className={[
-          'md:hidden border-t border-black/10 overflow-hidden',
-          // animasyon: height yerine max-h + opacity (transition-friendly)
-          'transition-[max-height,opacity] duration-300 ease-out',
-          open ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0',
-        ].join(' ')}
-        aria-hidden={!open}
-      >
-        <nav className="mx-auto max-w-6xl px-4 py-2 flex flex-col gap-1" aria-label="Mobil menü">
-          {NAV.map((n) => {
-            const active = isActive(n.href);
-            return (
-              <Link
-                key={n.href}
-                href={n.href}
-                className={[
-                  'nav-link rounded-md px-3 py-2',
-                  active ? 'nav-link-active text-foreground' : 'text-muted-foreground',
-                  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]',
-                ].join(' ')}
-                aria-current={active ? 'page' : undefined}
-              >
-                {n.label}
-              </Link>
-            );
-          })}
-          <Link
-            href="/profile"
-            className={[
-              'nav-link rounded-md px-3 py-2',
-              isActive('/profile') ? 'nav-link-active text-foreground' : 'text-muted-foreground',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]',
-            ].join(' ')}
-            aria-current={isActive('/profile') ? 'page' : undefined}
-          >
-            Profil
-          </Link>
-          <button
-            onClick={onLogout}
-            className="btn btn-outline h-9 mt-1"
-          >
-            Çıkış
-          </button>
-        </nav>
-      </div>
+      {open && (
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+          <nav className="px-4 py-2 space-y-1">
+            {NAV.map((n) => {
+              const active = isActive(n.href);
+              return (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className={[
+                    'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    active 
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
+                  ].join(' ')}
+                  aria-current={active ? 'page' : undefined}
+                >
+                  {n.label}
+                </Link>
+              );
+            })}
+            <hr className="my-2 border-gray-200 dark:border-gray-700" />
+            <Link
+              href="/profile"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              Profil
+            </Link>
+            <button
+              onClick={onLogout}
+              className="block w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              Çıkış Yap
+            </button>
+          </nav>
+        </div>
+      )}
     </header>
   );
 }
