@@ -125,8 +125,12 @@ body { @apply bg-background text-foreground; }
   padding-inline: 1rem;
   max-width: var(--breakpoint-lg);
 }
-@media (width >= var(--breakpoint-sm)) { .container { padding-inline: 1.25rem; } }
-@media (width >= var(--breakpoint-xl)) { .container { max-width: var(--breakpoint-xl); } }
+@media (min-width: 40rem) {
+  .container { padding-inline: 1.25rem; }
+}
+@media (min-width: 80rem) {
+  .container { max-width: 80rem; }
+}
 
 /* Kart yüzey */
 @utility card {
