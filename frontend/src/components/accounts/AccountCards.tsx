@@ -1,0 +1,228 @@
+'use client';
+
+import { useState } from 'react';
+import { type AccountDTO } from '@/lib/accounts';
+import { type BalanceItem } from '@/lib/reports';
+import { AccountsAPI } from '@/lib/accounts';
+import { ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
+import { useToast } from '@/components/ToastProvider';
+import Link from 'next/link';
+
+type Props = { 
+  items: AccountDTO[];
+  balances?: BalanceItem[];
+  onDelete?: (id: string) => void;
+};
+
+// Hesap türüne göre kart stilleri
+const accountCardStyles = {
+  BANK: {
+    gradient: 'bg-gradient-to-br from-gray-600 via-slate-700 to-gray-800',
+    pattern: 'bg-[url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")]',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    ),
+    decoration: 'absolute -bottom-10 -right-10 w-32 h-32 bg-slate-500 rounded-full opacity-20'
+  },
+  CASH: {
+    gradient: 'bg-gradient-to-br from-amber-800 via-yellow-600 to-orange-500',
+    pattern: 'bg-[url("data:image/svg+xml,%3Csvg width="50" height="50" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M25.86 24.28l-1.73-1L21 22.72l3.14 5.44 6.29-3.64-1.73-1-2.57 1.5L25.86 24.28zm-13.14.5l5.16-8.66L11.39 13l-3.14 5.44 4.29 2.5 12.43-7.66L22.34 4l-6.29 3.64 4.43 7.34-13.57 8.5-1.73-1 2.57-1.5z"/%3E%3C/g%3E%3C/svg%3E")]',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ),
+    decoration: 'absolute bottom-2 right-10 w-16 h-16 bg-white/5 rounded-lg transform rotate-12'
+  },
+  CARD: {
+    gradient: 'bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-700',
+    pattern: 'bg-[url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M30 0l30 30-30 30L0 30z"/%3E%3C/g%3E%3C/svg%3E")]',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+      </svg>
+    ),
+    decoration: 'absolute -top-4 -right-4 w-24 h-24 bg-white/10 rounded-full'
+  },
+  WALLET: {
+    gradient: 'bg-gradient-to-tr from-green-300 via-teal-400 to-cyan-500',
+    pattern: 'bg-[url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffffff" fill-opacity="0.1"%3E%3Cpath d="M30 0l30 30-30 30L0 30z"/%3E%3C/g%3E%3C/svg%3E")]',
+    icon: (
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    ),
+    decoration: 'absolute -top-10 -left-10 w-28 h-28 border-4 border-black/10 rounded-full'
+  }
+};
+
+export default function AccountCards({ items, balances, onDelete }: Props) {
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const { show } = useToast();
+
+  // Hesap için bakiye bulma fonksiyonu
+  function getBalanceForAccount(accountId: string): string {
+    const balanceItem = balances?.find(b => b.accountId === accountId);
+    if (!balanceItem) return '0.00';
+    const balance = parseFloat(balanceItem.balance || '0');
+    return balance.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+  }
+
+  // Toplam bakiye hesaplama
+  function getTotalBalance(): string {
+    if (!balances?.length) return '0.00';
+    const total = balances.reduce((sum, balance) => sum + parseFloat(balance.balance || '0'), 0);
+    return total.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+  }
+
+  // Hesap silme fonksiyonu
+  async function deleteAccount(id: string) {
+    const account = items.find(item => item.id === id);
+    const accountName = account?.name || 'Hesap';
+    
+    if (!confirm(`${accountName} hesabını silmek istediğinizden emin misiniz?\n\n⚠️ Bu işlem geri alınamaz ve hesaba ait tüm işlemler de silinecektir.`)) {
+      return;
+    }
+
+    try {
+      setDeletingId(id);
+      await AccountsAPI.delete(id);
+      
+      onDelete?.(id);
+      show(`${accountName} hesabı başarıyla silindi`, 'success');
+    } catch (error: any) {
+      let message = 'Hesap silinirken beklenmeyen bir hata oluştu';
+      
+      if (error?.message?.includes('related transactions')) {
+        message = 'Bu hesaba ait işlemler bulunduğu için silinemez. Önce işlemleri silin veya başka bir hesaba taşıyın.';
+      } else if (error?.message?.includes('not found')) {
+        message = 'Hesap bulunamadı. Sayfayı yenileyip tekrar deneyin.';
+      } else if (error?.message) {
+        message = error.message;
+      }
+      
+      show(message, 'error');
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  if (!items?.length) {
+    return (
+      <div className="reveal card text-center py-8 sm:py-12">
+        <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-3 sm:mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <svg className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+        <h3 className="text-base sm:text-lg font-semibold mb-2">Henüz Hesap Yok</h3>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto px-4">
+          Finansal takibinize başlamak için önce bir hesap oluşturmanız gerekiyor. 
+          Hesap oluşturduktan sonra işlemlerinizi kaydetmeye başlayabilirsiniz.
+        </p>
+        <Link href="/accounts/new" className="btn btn-primary text-sm sm:text-base">
+          Hesap Oluştur
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="reveal space-y-6">
+      {/* Hesap Kartları Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {items.map((account) => {
+          const styles = accountCardStyles[account.type];
+          const isWallet = account.type === 'WALLET';
+          
+          return (
+            <div
+              key={account.id}
+              className={`snap-center shrink-0 w-full h-48 rounded-2xl shadow-lg 
+                ${styles.gradient} 
+                ${isWallet ? 'text-gray-800' : 'text-white'} 
+                p-6 flex flex-col justify-between relative overflow-hidden
+                hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
+            >
+              {/* Arka plan deseni */}
+              <div className={`absolute inset-0 ${styles.pattern} opacity-10`} style={{ backgroundSize: '50px' }}></div>
+              
+              {/* Dekoratif element */}
+              <div className={styles.decoration}></div>
+
+              {/* Üst kısım - Hesap adı ve ikon */}
+              <div className="relative z-10">
+                <div className="flex justify-between items-start">
+                  <h3 className="text-lg font-semibold truncate">{account.name}</h3>
+                  <div className="flex-shrink-0">
+                    {styles.icon}
+                  </div>
+                </div>
+                <p className="text-sm opacity-80">{ACCOUNT_TYPE_LABELS_TR[account.type]}</p>
+              </div>
+
+              {/* Alt kısım - Bakiye ve işlemler */}
+              <div className="relative z-10">
+                <p className="text-2xl font-bold tracking-tight">
+                  ₺{getBalanceForAccount(account.id)}
+                </p>
+                <p className="text-xs opacity-80">
+                  Son işlem: {new Date(account.updatedAt).toLocaleDateString('tr-TR')}
+                </p>
+              </div>
+
+              {/* Aksiyon butonları - Hover'da görünür */}
+              <div className="absolute inset-0 bg-black/20 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-2">
+                <Link
+                  href={`/accounts/${account.id}/edit`}
+                  className="p-2 bg-white/20 backdrop-blur-sm rounded-lg text-white hover:bg-white/30 transition-colors"
+                  title="Düzenle"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </Link>
+                <button
+                  onClick={() => deleteAccount(account.id)}
+                  disabled={deletingId === account.id}
+                  className="p-2 bg-red-500/80 backdrop-blur-sm rounded-lg text-white hover:bg-red-500 transition-colors disabled:opacity-50"
+                  title="Sil"
+                >
+                  {deletingId === account.id ? (
+                    <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Hesap Özeti */}
+      <div className="card bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Hesap Özeti</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Toplam hesap sayınız</p>
+          </div>
+          <div className="text-right">
+            <p className="text-3xl font-bold text-gray-900 dark:text-white">
+              ₺{getTotalBalance()}
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {items.length} hesap
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

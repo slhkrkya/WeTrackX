@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import BalanceCards from '@/components/dashboard/BalanceCards';
 import MonthlySeriesChart from '@/components/dashboard/MonthlySeriesChart';
 import CategoryTotals from '@/components/dashboard/CategoryTotals';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
@@ -13,9 +12,11 @@ import {
   type TxItem,
   type Cashflow,
 } from '@/lib/reports';
+import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
 import { clearAuth } from '@/lib/auth';
 import { fmtMoney } from '@/lib/format';
 import Link from 'next/link';
+import AccountCards from '@/components/accounts/AccountCards';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -27,12 +28,14 @@ export default function DashboardPage() {
   const [catExpense, setCatExpense] = useState<CategoryTotal[]>([]);
   const [recent, setRecent] = useState<TxItem[]>([]);
   const [cashflow, setCashflow] = useState<Cashflow | null>(null);
+  const [accounts, setAccounts] = useState<AccountDTO[]>([]);
 
   useEffect(() => {
     (async () => {
       try {
-        const [b, ci, ce, r, cf] = await Promise.all([
+        const [b, a, ci, ce, r, cf] = await Promise.all([
           ReportsAPI.balances(),
+          AccountsAPI.list(),
           ReportsAPI.categoryTotals('INCOME'),
           ReportsAPI.categoryTotals('EXPENSE'),
           ReportsAPI.recentTransactions(10),
@@ -40,15 +43,11 @@ export default function DashboardPage() {
         ]);
         
         setBalances(b);
+        setAccounts(a);
         setCatIncome(ci);
         setCatExpense(ce);
         setRecent(r.items);
         setCashflow(cf);
-        
-        // Hesap kontrolü - eğer hesap yoksa kullanıcıya bilgi ver
-        if (b.length === 0) {
-          setErr('Henüz hesabınız bulunmuyor. İşlem yapabilmek için önce hesap oluşturun.');
-        }
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
         router.replace('/auth/login');
@@ -83,40 +82,6 @@ export default function DashboardPage() {
     );
   }
 
-  if (err && balances.length === 0) {
-    return (
-      <main className="min-h-dvh p-6 space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <button onClick={onLogout} className="nav-link">
-            Çıkış Yap
-          </button>
-        </div>
-        
-        <div className="reveal card text-center py-12">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-            <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-          </div>
-          <h2 className="text-lg font-semibold mb-2">İlk Hesabınızı Oluşturun</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
-            Finansal takibinize başlamak için önce bir hesap oluşturmanız gerekiyor. 
-            Hesap oluşturduktan sonra işlemlerinizi kaydetmeye başlayabilirsiniz.
-          </p>
-          <div className="flex justify-center gap-3">
-            <Link href="/accounts/new" className="btn btn-primary">
-              Hesap Oluştur
-            </Link>
-            <Link href="/accounts" className="nav-link">
-              Hesapları Görüntüle
-            </Link>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   // Para birimini balances'tan türet (yoksa TRY)
   const baseCurrency = balances[0]?.currency ?? 'TRY';
 
@@ -136,25 +101,24 @@ export default function DashboardPage() {
           <p className="text-sm" style={{ color: 'rgb(var(--error))' }}>
             {err}
           </p>
-          {balances.length === 0 && (
-            <div className="mt-3">
-              <button 
-                onClick={() => router.push('/accounts/new')} 
-                className="btn btn-primary"
-              >
-                Hesap Oluştur
-              </button>
-            </div>
-          )}
         </div>
       )}
 
-      {/* Hesap Bakiyeleri */}
+      {/* Modern Hesap Kartları */}
       <section className="reveal space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Hesap Bakiyeleri</h2>
-        <div className="card">
-          <BalanceCards items={balances} />
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-foreground">Hesaplarım</h2>
+          <Link href="/accounts" className="btn btn-outline h-8 text-sm">
+            Tümünü Gör
+          </Link>
         </div>
+        <AccountCards 
+          items={accounts} 
+          balances={balances}
+          onDelete={(id: string) => {
+            setAccounts(accounts.filter(item => item.id !== id));
+          }}
+        />
       </section>
 
       {/* Aylık Seri */}
