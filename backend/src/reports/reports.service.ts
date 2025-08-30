@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from '../transactions/transaction.entity';
 import { Category } from '../categories/category.entity';
+import { Account } from '../accounts/account.entity';
 
 @Injectable()
 export class ReportsService {
@@ -12,65 +13,52 @@ export class ReportsService {
   ) {}
 
   /**
-   * Hesap bazlı bakiyeler.
-   * Kurallar:
-   *  - INCOME  => +amount (account)
-   *  - EXPENSE => -amount (account)
-   *  - TRANSFER: fromAccount => -amount, toAccount => +amount
+   * Hesap bakiyeleri: her hesap için toplam bakiye (income + expense + transfer).
+   * İşlem yapılmamış hesaplar da dahil edilir.
    */
-  async getAccountBalances(ownerId: string) {
-    // Aynı ifadeyi hem SELECT hem GROUP BY'da kullanacağız (alias yerine ifade)
-    const exprId = "COALESCE(acc.id, fromAcc.id, toAcc.id)";
-    const exprName = "COALESCE(acc.name, fromAcc.name, toAcc.name)";
-    const exprCurrency = "COALESCE(acc.currency, fromAcc.currency, toAcc.currency)";
+  async getBalances(ownerId: string) {
+    // Önce tüm hesapları al
+    const accountRepo = this.txRepo.manager.getRepository(Account);
+    
+    const allAccounts = await accountRepo.find({
+      where: { owner: { id: ownerId } },
+      order: { name: 'ASC' }
+    });
 
-    const qb = this.txRepo.createQueryBuilder('t')
-      .leftJoin('t.account', 'acc')
-      .leftJoin('t.fromAccount', 'fromAcc')
-      .leftJoin('t.toAccount', 'toAcc')
-      .select([
-        `${exprId} AS account_id`,
-        `${exprName} AS account_name`,
-        `${exprCurrency} AS currency`,
-      ])
-      .addSelect(
-        `
-        SUM(
-          CASE
-            WHEN t.type = 'INCOME'   AND acc.id      IS NOT NULL THEN CAST(t.amount AS NUMERIC)    -- + (pozitif)
-            WHEN t.type = 'EXPENSE'  AND acc.id      IS NOT NULL THEN CAST(t.amount AS NUMERIC)    -- + (zaten negatif)
-            WHEN t.type = 'TRANSFER' AND fromAcc.id  IS NOT NULL THEN -CAST(t.amount AS NUMERIC)   -- - (pozitif varsayımı)
-            WHEN t.type = 'TRANSFER' AND toAcc.id    IS NOT NULL THEN  CAST(t.amount AS NUMERIC)   -- + (pozitif varsayımı)
-            ELSE 0
-          END
-        )
-        `,
-        'balance',
-      )
+    // Her hesap için bakiye hesapla
+    const balances = await Promise.all(
+      allAccounts.map(async (account) => {
+        const qb = this.txRepo.createQueryBuilder('t')
+          .leftJoin('t.account', 'acc')
+          .leftJoin('t.fromAccount', 'fromAcc')
+          .leftJoin('t.toAccount', 'toAcc')
+          .select(`
+            SUM(
+              CASE
+                WHEN t.type = 'INCOME'   AND acc.id      = :accountId THEN CAST(t.amount AS NUMERIC)
+                WHEN t.type = 'EXPENSE'  AND acc.id      = :accountId THEN CAST(t.amount AS NUMERIC)
+                WHEN t.type = 'TRANSFER' AND fromAcc.id  = :accountId THEN -CAST(t.amount AS NUMERIC)
+                WHEN t.type = 'TRANSFER' AND toAcc.id    = :accountId THEN  CAST(t.amount AS NUMERIC)
+                ELSE 0
+              END
+            )
+          `, 'balance')
+          .where('t.ownerId = :ownerId', { ownerId })
+          .andWhere('(acc.id = :accountId OR fromAcc.id = :accountId OR toAcc.id = :accountId)', { accountId: account.id });
 
-      .where('t.ownerId = :ownerId', { ownerId })
-      // !!! Alias yerine ifadenin kendisiyle group by
-      .groupBy(exprId)
-      .addGroupBy(exprName)
-      .addGroupBy(exprCurrency)
-      .orderBy('account_name', 'ASC');
+        const result = await qb.getRawOne<{ balance: string }>();
+        const balance = result?.balance ? Number(result.balance) : 0;
 
-    const rows = await qb.getRawMany<{
-      account_id: string | null;
-      account_name: string | null;
-      currency: string | null;
-      balance: string;
-    }>();
+        return {
+          accountId: account.id,
+          name: account.name,
+          currency: account.currency,
+          balance: balance.toFixed(2),
+        };
+      })
+    );
 
-    // Sadece gerçekten hesapla ilişkili satırları döndür (null hesapları ele)
-    return rows
-      .filter(r => r.account_id) // null olanları at
-      .map(r => ({
-        accountId: r.account_id as string,
-        name: r.account_name || '—',
-        currency: r.currency || 'TRY',
-        balance: r.balance,
-      }));
+    return balances;
   }
 
   /**

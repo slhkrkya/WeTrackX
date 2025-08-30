@@ -10,7 +10,7 @@ export class ReportsController {
 
   @Get('balances')
   balances(@CurrentUser() u: { userId: string }) {
-    return this.reports.getAccountBalances(u.userId);
+    return this.reports.getBalances(u.userId);
   }
 
   @Get('cashflow')

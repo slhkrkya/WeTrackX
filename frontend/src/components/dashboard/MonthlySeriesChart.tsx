@@ -493,8 +493,8 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
         <div
           className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-3 py-2 text-sm pointer-events-none"
           style={{
-            left: tooltip.x,
-            top: tooltip.y,
+            left: Math.min(tooltip.x, window.innerWidth - 200), // Sağ kenara taşmasını önle
+            top: Math.max(10, Math.min(tooltip.y, window.innerHeight - 80)), // Üst/alt kenara taşmasını önle
             transform: 'translateY(-50%)'
           }}
         >

@@ -132,6 +132,16 @@ export default function TransactionsClient() {
   const sp = useSearchParams();
   const { show } = useToast();
 
+  // URL güncelleme yardımcı fonksiyonu
+  function updateUrlParams(next: Record<string, string | number | undefined | null>) {
+    const params = new URLSearchParams(Array.from(sp.entries()));
+    Object.entries(next).forEach(([k, v]) => {
+      if (v === undefined || v === '' || v === null) params.delete(k);
+      else params.set(k, String(v));
+    });
+    router.replace('/transactions' + (params.toString() ? `?${params.toString()}` : ''));
+  }
+
   // State variables
   const [items, setItems] = useState<TxItem[]>([]);
   const [accounts, setAccounts] = useState<AccountDTO[]>([]);
@@ -151,30 +161,61 @@ export default function TransactionsClient() {
   const [pageSize, setPageSize] = useState<number>(Number(sp.get('pageSize') || 20));
   const [total, setTotal] = useState<number>(0);
 
-  // Geri/ileri ile URL değişirse state’i senkronla
+  // Form filtreleri (henüz uygulanmamış)
+  const [formType, setFormType] = useState<TxType>(parseType(sp.get('type')));
+  const [formAccountId, setFormAccountId] = useState<string>(sp.get('accountId') || '');
+  const [formCategoryId, setFormCategoryId] = useState<string>(sp.get('categoryId') || '');
+  const [formFrom, setFormFrom] = useState<string>(sp.get('from') || '');
+  const [formTo, setFormTo] = useState<string>(sp.get('to') || '');
+  const [formQ, setFormQ] = useState<string>(sp.get('q') || '');
+
+  // Geri/ileri ile URL değişirse state'i senkronla
   useEffect(() => {
-    setType(parseType(sp.get('type')));
-    setAccountId(sp.get('accountId') || '');
-    setCategoryId(sp.get('categoryId') || '');
-    setFrom(sp.get('from') || '');
-    setTo(sp.get('to') || '');
-    setQ(sp.get('q') || '');
-    setPage(Number(sp.get('page') || 1));
-    setPageSize(Number(sp.get('pageSize') || 20));
+    const urlType = parseType(sp.get('type'));
+    const urlAccountId = sp.get('accountId') || '';
+    const urlCategoryId = sp.get('categoryId') || '';
+    const urlFrom = sp.get('from') || '';
+    const urlTo = sp.get('to') || '';
+    const urlQ = sp.get('q') || '';
+    const urlPage = Number(sp.get('page') || 1);
+    const urlPageSize = Number(sp.get('pageSize') || 20);
+
+    // Aktif filtreleri güncelle
+    setType(urlType);
+    setAccountId(urlAccountId);
+    setCategoryId(urlCategoryId);
+    setFrom(urlFrom);
+    setTo(urlTo);
+    setQ(urlQ);
+    setPage(urlPage);
+    setPageSize(urlPageSize);
+
+    // Form filtrelerini de güncelle
+    setFormType(urlType);
+    setFormAccountId(urlAccountId);
+    setFormCategoryId(urlCategoryId);
+    setFormFrom(urlFrom);
+    setFormTo(urlTo);
+    setFormQ(urlQ);
   }, [sp]);
 
   const catsForSelectedType = useMemo<CategoryDTO[]>(
-    () => (type === 'INCOME' ? catsIncome : type === 'EXPENSE' ? catsExpense : []),
-    [type, catsIncome, catsExpense],
+    () => (formType === 'INCOME' ? catsIncome : formType === 'EXPENSE' ? catsExpense : []),
+    [formType, catsIncome, catsExpense],
   );
 
-  // Veri çekimi
+  // Form tür değişince geçersiz kategori temizlensin
+  useEffect(() => {
+    if (formType === '' || formType === 'TRANSFER') setFormCategoryId('');
+  }, [formType]);
+
+
+
+  // Statik veriler: hesap/kategori listeleri – sadece ilk yüklemede
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        setLoading(true);
-        setErr('');
         const [accs, inc, exp] = await Promise.all([
           AccountsAPI.list(),
           CategoriesAPI.list('INCOME'),
@@ -188,10 +229,19 @@ export default function TransactionsClient() {
         if (!alive) return;
         setErr(e instanceof Error ? e.message : String(e));
         router.replace('/auth/login');
-        return;
       }
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  // İşlem listesi – filtrelere bağlı
+  useEffect(() => {
+    let alive = true;
+    (async () => {
       try {
+        setLoading(true);
+        setErr('');
         const typeParam: Kind | undefined = type === '' ? undefined : type;
         const data = await TransactionsAPI.list({
           type: typeParam,
@@ -210,33 +260,51 @@ export default function TransactionsClient() {
         setTotal(data.total);
       } catch (e) {
         if (!alive) return;
-        setErr(e instanceof Error ? e.message : String(e));
-        show(e instanceof Error ? e.message : String(e), 'error');
+        const msg = e instanceof Error ? e.message : String(e);
+        setErr(msg);
+        show(msg, 'error');
       } finally {
         if (!alive) return;
         setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
-  }, [router, type, accountId, categoryId, from, to, q, page, pageSize, show]);
+    return () => { alive = false; };
+  }, [type, accountId, categoryId, from, to, q, page, pageSize, show]);
 
   function applyFilters(e: React.FormEvent) {
     e.preventDefault();
-    const params = new URLSearchParams();
-    if (type) params.set('type', type);
-    if (accountId) params.set('accountId', accountId);
-    if (categoryId) params.set('categoryId', categoryId);
-    if (from) params.set('from', from);
-    if (to) params.set('to', to);
-    if (q) params.set('q', q);
-    if (page) params.set('page', String(page));
-    if (pageSize) params.set('pageSize', String(pageSize));
-    router.replace('/transactions' + (params.toString() ? `?${params.toString()}` : ''));
+    // Form filtrelerini aktif filtrelere kopyala
+    setType(formType);
+    setAccountId(formAccountId);
+    setCategoryId(formCategoryId);
+    setFrom(formFrom);
+    setTo(formTo);
+    setQ(formQ);
+    setPage(1);
+    
+    // URL'i güncelle
+    updateUrlParams({
+      type: formType || undefined,
+      accountId: formAccountId || undefined,
+      categoryId: formCategoryId || undefined,
+      from: formFrom || undefined,
+      to: formTo || undefined,
+      q: formQ || undefined,
+      page: 1,
+      pageSize,
+    });
   }
 
   function clearFilters() {
+    // Form filtrelerini temizle
+    setFormType('');
+    setFormAccountId('');
+    setFormCategoryId('');
+    setFormFrom('');
+    setFormTo('');
+    setFormQ('');
+    
+    // Aktif filtreleri temizle
     setType('');
     setAccountId('');
     setCategoryId('');
@@ -245,16 +313,17 @@ export default function TransactionsClient() {
     setQ('');
     setPage(1);
     setPageSize(20);
+    
     router.replace('/transactions');
   }
 
   if (loading) {
     return (
-      <main className="min-h-dvh p-6 space-y-6">
+      <main className="min-h-dvh p-4 sm:p-6 space-y-4 sm:space-y-6">
         {/* Başlık + Yeni İşlem */}
-        <div className="reveal flex items-center justify-between gap-3">
+        <div className="reveal flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="h-7 w-40 rounded bg-elevated animate-pulse" />
-          <div className="h-10 w-28 rounded bg-elevated animate-pulse" />
+          <div className="h-10 w-full sm:w-28 rounded bg-elevated animate-pulse" />
         </div>
         <FiltersSkeleton />
         <ListSkeleton />
@@ -284,15 +353,15 @@ export default function TransactionsClient() {
         {/* Segmented tür seçimi */}
         <div className="lg:col-span-6 flex items-center gap-3">
           <label className="subtext text-sm">Tür</label>
-          <SegmentedType value={type} onChange={setType} />
+          <SegmentedType value={formType} onChange={setFormType} />
         </div>
 
         <div className="space-y-1">
           <label className="subtext">Hesap</label>
           <select
             className="input bg-transparent"
-            value={accountId}
-            onChange={(e) => setAccountId(e.target.value)}
+            value={formAccountId}
+            onChange={(e) => setFormAccountId(e.target.value)}
           >
             <option value="">Tümü</option>
             {accounts.map((a) => (
@@ -305,10 +374,11 @@ export default function TransactionsClient() {
           <label className="subtext">Kategori</label>
           <select
             className="input bg-transparent"
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            disabled={type === '' || type === 'TRANSFER'}
-            title={type === '' || type === 'TRANSFER' ? 'Kategori yalnızca INCOME/EXPENSE için' : 'Kategori'}
+            value={formCategoryId}
+            onChange={(e) => setFormCategoryId(e.target.value)}
+            disabled={formType === '' || formType === 'TRANSFER'}
+            aria-disabled={formType === '' || formType === 'TRANSFER'}
+            title={formType === '' || formType === 'TRANSFER' ? 'Kategori yalnızca INCOME/EXPENSE için' : 'Kategori'}
           >
             <option value="">Tümü</option>
             {catsForSelectedType.map((c) => (
@@ -316,7 +386,7 @@ export default function TransactionsClient() {
             ))}
           </select>
           <p className="text-xs subtext">
-            {type === 'TRANSFER' || type === '' ? 'Kategori yalnızca INCOME/EXPENSE için' : '\u00A0'}
+            {formType === 'TRANSFER' || formType === '' ? 'Kategori yalnızca INCOME/EXPENSE için' : '\u00A0'}
           </p>
         </div>
 
@@ -325,8 +395,8 @@ export default function TransactionsClient() {
           <input
             className="input"
             type="date"
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            value={formFrom}
+            onChange={(e) => setFormFrom(e.target.value)}
           />
         </div>
 
@@ -335,8 +405,8 @@ export default function TransactionsClient() {
           <input
             className="input"
             type="date"
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
+            value={formTo}
+            onChange={(e) => setFormTo(e.target.value)}
           />
         </div>
 
@@ -345,8 +415,8 @@ export default function TransactionsClient() {
           <input
             className="input"
             placeholder="başlık / açıklama"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
+            value={formQ}
+            onChange={(e) => setFormQ(e.target.value)}
           />
         </div>
 
@@ -372,7 +442,7 @@ export default function TransactionsClient() {
           <div className="px-4 py-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2">Henüz İşlem Yok</h3>
@@ -390,57 +460,63 @@ export default function TransactionsClient() {
           </div>
         ) : (
           <ul className="divide-y" role="rowgroup">
-            {items.map((t) => (
-              <li
-                key={t.id}
-                role="row"
-                className={[
-                  'grid md:grid-cols-6 grid-cols-2 gap-2 px-4 py-2 text-sm',
-                  'hover:bg-elevated/70 transition-colors',
-                  'focus-within:bg-elevated/70',
-                ].join(' ')}
-              >
-                {/* Tarih */}
-                <div role="cell" className="order-1 md:order-none subtext">{fmtDate(t.date)}</div>
+            {items.map((t) => {
+              const amt = Number(t.amount);
+              const safeAmt = Number.isFinite(amt) ? Math.abs(amt) : 0; // (Adım 5)
+              return (
+                <li
+                  key={t.id}
+                  role="row"
+                  className={[
+                    'grid md:grid-cols-6 grid-cols-2 gap-2 px-4 py-2 text-sm',
+                    'hover:bg-elevated/70 transition-colors',
+                    'focus-within:bg-elevated/70',
+                  ].join(' ')}
+                >
+                  {/* Tarih */}
+                  <div role="cell" className="order-1 md:order-none subtext">
+                    <time dateTime={t.date}>{fmtDate(t.date)}</time>
+                  </div>
 
-                {/* Tür */}
-                <div role="cell" className="order-3 md:order-none">
-                  <TypeChip type={t.type} />
-                </div>
+                  {/* Tür */}
+                  <div role="cell" className="order-3 md:order-none">
+                    <TypeChip type={t.type} />
+                  </div>
 
-                {/* Başlık + açıklama tooltip */}
-                <div role="cell" className="truncate order-2 md:order-none" title={t.description || ''}>
-                  {t.title}
-                </div>
+                  {/* Başlık + açıklama tooltip */}
+                  <div role="cell" className="truncate order-2 md:order-none" title={t.description || ''}>
+                    {t.title}
+                  </div>
 
-                {/* Hesap / Karşı Hesap */}
-                <div role="cell" className="truncate order-4 md:order-none">
-                  {t.type === 'TRANSFER'
-                    ? `${t.fromAccount?.name ?? '—'} → ${t.toAccount?.name ?? '—'}`
-                    : t.account?.name || '—'}
-                </div>
+                  {/* Hesap / Karşı Hesap */}
+                  <div role="cell" className="truncate order-4 md:order-none">
+                    {t.type === 'TRANSFER'
+                      ? `${t.fromAccount?.name ?? '—'} → ${t.toAccount?.name ?? '—'}`
+                      : t.account?.name || '—'}
+                  </div>
 
-                {/* Kategori */}
-                <div role="cell" className="truncate order-5 md:order-none">
-                  {t.category?.name || (t.type === 'TRANSFER' ? '—' : '')}
-                </div>
+                  {/* Kategori */}
+                  <div role="cell" className="truncate order-5 md:order-none">
+                    {t.category?.name || (t.type === 'TRANSFER' ? '—' : '')}
+                  </div>
 
-                {/* Tutar */}
-                <div role="cell" className="text-right tabular-nums order-6 md:order-none">
-                  {t.type === 'INCOME' ? (
-                    <span className="money-in">
-                      + {fmtMoney(Math.abs(Number(t.amount)), t.currency)}
-                    </span>
-                  ) : t.type === 'EXPENSE' ? (
-                    <span className="money-out">
-                      - {fmtMoney(Math.abs(Number(t.amount)), t.currency)}
-                    </span>
-                  ) : (
-                    fmtMoney(Math.abs(Number(t.amount)), t.currency)
-                  )}
-                </div>
-              </li>
-            ))}
+                  {/* Tutar */}
+                  <div role="cell" className="text-right tabular-nums order-6 md:order-none">
+                    {t.type === 'INCOME' ? (
+                      <span className="money-in">
+                        + {fmtMoney(safeAmt, t.currency)}
+                      </span>
+                    ) : t.type === 'EXPENSE' ? (
+                      <span className="money-out">
+                        - {fmtMoney(safeAmt, t.currency)}
+                      </span>
+                    ) : (
+                      fmtMoney(safeAmt, t.currency)
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
@@ -453,7 +529,11 @@ export default function TransactionsClient() {
             type="button"
             className="btn btn-ghost"
             disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            onClick={() => {
+              const next = Math.max(1, page - 1);
+              setPage(next);
+              updateUrlParams({ page: next });
+            }}
           >
             Önceki
           </button>
@@ -462,14 +542,23 @@ export default function TransactionsClient() {
             type="button"
             className="btn btn-ghost"
             disabled={page * pageSize >= total}
-            onClick={() => setPage((p) => p + 1)}
+            onClick={() => {
+              const next = page + 1;
+              setPage(next);
+              updateUrlParams({ page: next });
+            }}
           >
             Sonraki
           </button>
           <select
             className="input bg-transparent w-[6.5rem]"
             value={pageSize}
-            onChange={(e) => setPageSize(Number(e.target.value) || 20)}
+            onChange={(e) => {
+              const size = Number(e.target.value) || 20;
+              setPageSize(size);
+              setPage(1);
+              updateUrlParams({ page: 1, pageSize: size });
+            }}
             title="Sayfa boyutu"
           >
             {[10, 20, 50, 100].map((n) => (
