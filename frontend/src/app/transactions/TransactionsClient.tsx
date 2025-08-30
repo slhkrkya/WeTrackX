@@ -32,18 +32,29 @@ const KIND_LABELS_TR: Record<Kind, string> = {
   TRANSFER: 'Transfer',
 };
 
+const typeStyles: Record<Kind, { text: string }> = {
+  INCOME:   { text: 'text-[rgb(var(--success))]' },
+  EXPENSE:  { text: 'text-[rgb(var(--error))]' },
+  TRANSFER: { text: 'text-[rgb(var(--accent))]' },
+};
+
 function parseType(value: string | null): TxType {
   return value === 'INCOME' || value === 'EXPENSE' || value === 'TRANSFER' ? value : '';
 }
 
-function TypeChip({ type }: { type: Kind }) {
-  const clr =
-    type === 'INCOME'
-      ? 'money-in'
-      : type === 'EXPENSE'
-        ? 'money-out'
-        : 'text-brand-600';
-  return <span className={['chip', clr].join(' ')}>{KIND_LABELS_TR[type]}</span>;
+function TypePill({ type }: { type: Kind }) {
+  const clr = typeStyles[type]?.text ?? '';
+  return (
+    <span
+      className={[
+        'pill text-[11px] h-6 px-2',
+        'bg-elevated',
+        clr,
+      ].join(' ')}
+    >
+      {KIND_LABELS_TR[type]}
+    </span>
+  );
 }
 
 function SegmentedType({
@@ -111,13 +122,13 @@ function FiltersSkeleton() {
 function ListSkeleton() {
   return (
     <div className="reveal card overflow-hidden">
-      <div className="hidden md:grid grid-cols-6 gap-2 px-4 py-2 text-[11px] subtext">
-        <div>Tarih</div><div>Tür</div><div>Başlık</div><div>Hesap / Karşı Hesap</div><div>Kategori</div><div className="text-right">Tutar</div>
+      <div className="hidden md:grid grid-cols-7 gap-2 px-4 py-2 text-[11px] subtext">
+        <div>Tarih</div><div>Tür</div><div>Başlık</div><div>Hesap / Karşı Hesap</div><div>Kategori</div><div className="text-right">Tutar</div><div className="text-right">İşlemler</div>
       </div>
       <ul className="divide-y">
         {Array.from({ length: 8 }).map((_, i) => (
-          <li key={i} className="grid md:grid-cols-6 grid-cols-2 gap-2 px-4 py-3">
-            {Array.from({ length: 6 }).map((__, k) => (
+          <li key={i} className="grid md:grid-cols-7 grid-cols-2 gap-2 px-4 py-3">
+            {Array.from({ length: 7 }).map((__, k) => (
               <div key={k} className="h-4 rounded bg-elevated animate-pulse md:block" />
             ))}
           </li>
@@ -209,8 +220,6 @@ export default function TransactionsClient() {
   useEffect(() => {
     if (formType === '' || formType === 'TRANSFER') setFormCategoryId('');
   }, [formType]);
-
-
 
   // Statik veriler: hesap/kategori listeleri – sadece ilk yüklemede
   useEffect(() => {
@@ -468,7 +477,7 @@ export default function TransactionsClient() {
           <div className="px-4 py-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
             <h3 className="text-lg font-semibold mb-2">Henüz İşlem Yok</h3>
@@ -487,16 +496,19 @@ export default function TransactionsClient() {
         ) : (
           <ul className="divide-y" role="rowgroup">
             {items.map((t) => {
+              const income = t.type === 'INCOME';
+              const expense = t.type === 'EXPENSE';
               const amt = Number(t.amount);
-              const safeAmt = Number.isFinite(amt) ? Math.abs(amt) : 0; // (Adım 5)
+              const safeAmt = Number.isFinite(amt) ? Math.abs(amt) : 0;
+
               return (
                 <li
                   key={t.id}
                   role="row"
                   className={[
                     'grid md:grid-cols-7 grid-cols-2 gap-2 px-4 py-2 text-sm',
-                    'hover:bg-elevated/70 transition-colors',
-                    'focus-within:bg-elevated/70',
+                    'hover:bg-[rgb(var(--surface-1))]/60 transition-colors',
+                    'focus-within:bg-[rgb(var(--surface-1))]/60',
                   ].join(' ')}
                 >
                   {/* Tarih */}
@@ -506,33 +518,46 @@ export default function TransactionsClient() {
 
                   {/* Tür */}
                   <div role="cell" className="order-3 md:order-none">
-                    <TypeChip type={t.type} />
+                    <TypePill type={t.type} />
                   </div>
 
-                  {/* Başlık + açıklama tooltip */}
-                  <div role="cell" className="truncate order-2 md:order-none" title={t.description || ''}>
-                    {t.title}
+                  {/* Başlık + açıklama */}
+                  <div role="cell" className="order-2 md:order-none">
+                    <span className="truncate block">{t.title}</span>
+                    {t.description ? (
+                      <span className="subtext text-xs truncate block">{t.description}</span>
+                    ) : null}
                   </div>
 
                   {/* Hesap / Karşı Hesap */}
-                  <div role="cell" className="truncate order-4 md:order-none">
-                    {t.type === 'TRANSFER'
-                      ? `${t.fromAccount?.name ?? '—'} → ${t.toAccount?.name ?? '—'}`
-                      : t.account?.name || '—'}
+                  <div role="cell" className="order-4 md:order-none">
+                    {t.type === 'TRANSFER' ? (
+                      <span className="truncate block">
+                        {t.fromAccount?.name} → {t.toAccount?.name}
+                      </span>
+                    ) : (
+                      <span className="truncate block">{t.account?.name || '-'}</span>
+                    )}
                   </div>
 
                   {/* Kategori */}
                   <div role="cell" className="truncate order-5 md:order-none">
-                    {t.category?.name || (t.type === 'TRANSFER' ? '—' : '')}
+                    {t.category?.name || (t.type === 'TRANSFER' ? '—' : '-')}
                   </div>
 
                   {/* Tutar */}
-                  <div role="cell" className="text-right tabular-nums order-6 md:order-none">
-                    {t.type === 'INCOME' ? (
+                  <div
+                    role="cell"
+                    className={[
+                      'tabular-nums text-right order-6 md:order-none',
+                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--card))]',
+                    ].join(' ')}
+                  >
+                    {income ? (
                       <span className="money-in">
                         + {fmtMoney(safeAmt, t.currency)}
                       </span>
-                    ) : t.type === 'EXPENSE' ? (
+                    ) : expense ? (
                       <span className="money-out">
                         - {fmtMoney(safeAmt, t.currency)}
                       </span>

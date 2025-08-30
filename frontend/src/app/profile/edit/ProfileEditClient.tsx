@@ -2,17 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
-import { type AccountType, ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
+import { UsersAPI, type UserProfile } from '@/lib/users';
 import { useToast } from '@/components/ToastProvider';
 
-type Props = { id: string };
-
-export default function AccountEditClient({ id }: Props) {
+export default function ProfileEditClient() {
   const router = useRouter();
   const { show } = useToast();
   
-  const [account, setAccount] = useState<AccountDTO | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string>('');
@@ -20,8 +17,6 @@ export default function AccountEditClient({ id }: Props) {
   // Form state
   const [formData, setFormData] = useState({
     name: '',
-    type: 'BANK' as AccountType,
-    currency: 'TRY', // Sabit Türk Lirası
   });
 
   useEffect(() => {
@@ -31,17 +26,15 @@ export default function AccountEditClient({ id }: Props) {
         setLoading(true);
         setErr('');
         
-        const accData = await AccountsAPI.get(id);
+        const profileData = await UsersAPI.getProfile();
 
         if (!alive) return;
 
-        setAccount(accData);
+        setProfile(profileData);
 
         // Form verilerini doldur
         setFormData({
-          name: accData.name,
-          type: accData.type,
-          currency: 'TRY', // Her zaman TRY kullan
+          name: profileData.name || '',
         });
 
       } catch (e: unknown) {
@@ -55,22 +48,22 @@ export default function AccountEditClient({ id }: Props) {
       }
     })();
     return () => { alive = false; };
-  }, [id, show]);
+  }, [show]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     
-    if (!account) return;
+    if (!profile) return;
 
     try {
       setSaving(true);
       
-      await AccountsAPI.update(id, formData);
+      await UsersAPI.updateProfile(formData);
 
-      show('Hesap başarıyla güncellendi', 'success');
-      router.push('/accounts');
+      show('Profil başarıyla güncellendi', 'success');
+      router.push('/profile');
     } catch (error: any) {
-      const message = error?.message || 'Hesap güncellenirken hata oluştu';
+      const message = error?.message || 'Profil güncellenirken hata oluştu';
       show(message, 'error');
       setErr(message);
     } finally {
@@ -106,19 +99,19 @@ export default function AccountEditClient({ id }: Props) {
     );
   }
 
-  if (!account) {
+  if (!profile) {
     return (
       <main className="min-h-dvh p-6 space-y-6">
         <div className="reveal card text-center py-12">
-          <h3 className="text-lg font-semibold mb-2">Hesap Bulunamadı</h3>
+          <h3 className="text-lg font-semibold mb-2">Profil Bulunamadı</h3>
           <p className="text-gray-600 dark:text-gray-400 mb-4">
-            Aradığınız hesap bulunamadı veya silinmiş olabilir.
+            Profil bilgileriniz yüklenirken bir hata oluştu.
           </p>
           <button
-            onClick={() => router.push('/accounts')}
+            onClick={() => router.push('/profile')}
             className="btn btn-primary"
           >
-            Hesaplara Dön
+            Profile Dön
           </button>
         </div>
       </main>
@@ -129,30 +122,26 @@ export default function AccountEditClient({ id }: Props) {
     <main className="min-h-dvh p-6 space-y-6">
       {/* Başlık */}
       <div className="reveal flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Hesap Düzenle</h1>
+        <h1 className="text-2xl font-bold">Profil Düzenle</h1>
         <button
-          onClick={() => router.push('/accounts')}
+          onClick={() => router.push('/profile')}
           className="btn btn-ghost h-9"
         >
           İptal
         </button>
       </div>
 
-      {/* Mevcut Hesap Bilgileri */}
+      {/* Mevcut Profil Bilgileri */}
       <div className="reveal card p-4 space-y-3">
-        <h3 className="font-semibold text-sm">Mevcut Hesap</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+        <h3 className="font-semibold text-sm">Mevcut Bilgiler</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="label-soft">Ad:</span>
-            <p className="font-medium">{account.name}</p>
+            <span className="label-soft">Ad Soyad:</span>
+            <p className="font-medium">{profile.name || 'Belirtilmemiş'}</p>
           </div>
           <div>
-            <span className="label-soft">Tür:</span>
-            <p className="font-medium">{ACCOUNT_TYPE_LABELS_TR[account.type]}</p>
-          </div>
-          <div>
-            <span className="label-soft">Para Birimi:</span>
-            <p className="font-medium">TRY - Türk Lirası</p>
+            <span className="label-soft">E-posta:</span>
+            <p className="font-medium">{profile.email}</p>
           </div>
         </div>
       </div>
@@ -161,31 +150,30 @@ export default function AccountEditClient({ id }: Props) {
       <form onSubmit={handleSubmit} className="reveal card space-y-4">
         <h3 className="font-semibold text-sm">Düzenleme</h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <div className="space-y-1">
-            <label className="subtext">Hesap Adı</label>
+            <label className="subtext">Ad Soyad</label>
             <input
               type="text"
               className="input"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
+              placeholder="Adınızı ve soyadınızı girin"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="subtext">Hesap Türü</label>
-            <select
-              className="input"
-              value={formData.type}
-              onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as AccountType }))}
-              required
-            >
-              <option value="BANK">Banka</option>
-              <option value="CASH">Nakit</option>
-              <option value="CARD">Kart</option>
-              <option value="WALLET">Cüzdan</option>
-            </select>
+            <label className="subtext">E-posta (Değiştirilemez)</label>
+            <input
+              type="email"
+              className="input bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+              value={profile.email}
+              disabled
+              readOnly
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              E-posta adresiniz güvenlik nedeniyle değiştirilemez
+            </p>
           </div>
         </div>
 
@@ -199,7 +187,7 @@ export default function AccountEditClient({ id }: Props) {
           </button>
           <button
             type="button"
-            onClick={() => router.push('/accounts')}
+            onClick={() => router.push('/profile')}
             className="btn btn-ghost"
           >
             İptal

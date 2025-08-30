@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -22,12 +22,14 @@ export default function RegisterPage() {
   const router = useRouter();
   const { show } = useToast();
 
-  // Varsayılan değerler kaldırıldı
+  // Form state
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [showPw, setShowPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>('');
 
@@ -35,6 +37,16 @@ export default function RegisterPage() {
   const [nameErr, setNameErr] = useState<string>('');
   const [emailErr, setEmailErr] = useState<string>('');
   const [passwordErr, setPasswordErr] = useState<string>('');
+  const [confirmPasswordErr, setConfirmPasswordErr] = useState<string>('');
+
+  // Şifre değiştiğinde tekrar alanını kontrol et
+  useEffect(() => {
+    if (confirmPassword && password !== confirmPassword) {
+      setConfirmPasswordErr('Şifreler eşleşmiyor');
+    } else if (confirmPassword && password === confirmPassword) {
+      setConfirmPasswordErr('');
+    }
+  }, [password, confirmPassword]);
 
   function validate() {
     let ok = true;
@@ -52,6 +64,9 @@ export default function RegisterPage() {
     if (!email.trim()) {
       setEmailErr('E-posta zorunlu');
       ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailErr('Geçerli bir e-posta adresi girin');
+      ok = false;
     } else {
       setEmailErr('');
     }
@@ -59,11 +74,21 @@ export default function RegisterPage() {
     if (!password) {
       setPasswordErr('Şifre zorunlu');
       ok = false;
-    } else if (password.length < 8) {
-      setPasswordErr('Şifre en az 8 karakter olmalı');
+    } else if (password.length < 6) {
+      setPasswordErr('Şifre en az 6 karakter olmalı');
       ok = false;
     } else {
       setPasswordErr('');
+    }
+
+    if (!confirmPassword) {
+      setConfirmPasswordErr('Şifre tekrarı zorunlu');
+      ok = false;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordErr('Şifreler eşleşmiyor');
+      ok = false;
+    } else {
+      setConfirmPasswordErr('');
     }
 
     return ok;
@@ -89,111 +114,240 @@ export default function RegisterPage() {
       const errorMessage = getErrorMessage(e);
       setErr(errorMessage);
       show(errorMessage, 'error');
+    } finally {
       setLoading(false);
     }
   }
 
   return (
-    <main className="min-h-dvh flex items-center justify-center p-6">
-      <form onSubmit={onSubmit} className="reveal w-full max-w-sm space-y-5 card" aria-busy={loading}>
-        <h1 className="text-2xl font-bold">Kayıt Ol</h1>
-
-        {err && (
-          <div className="card ring-1 ring-[rgb(var(--error))]/25" role="alert" aria-live="polite">
-            <p className="text-sm text-[rgb(var(--error))]">{err}</p>
+    <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md">
+        {/* Logo ve Başlık */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
           </div>
-        )}
-
-        {/* Ad */}
-        <div className="space-y-1">
-          <label htmlFor="name" className="label-soft">Ad</label>
-          <input
-            id="name"
-            className="input"
-            type="text"
-            value={name}
-            onChange={(ev) => setName(ev.target.value)}
-            onBlur={() => {
-              if (!name.trim()) setNameErr('Ad zorunlu');
-              else if (name.trim().length < 2) setNameErr('Ad en az 2 karakter olmalı');
-              else setNameErr('');
-            }}
-            maxLength={64}
-            required
-            disabled={loading}
-            aria-invalid={!!nameErr}
-            aria-describedby={nameErr ? 'name-err' : undefined}
-          />
-          {nameErr && <p id="name-err" className="text-xs text-[rgb(var(--error))]">{nameErr}</p>}
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">WeTrackX</h1>
+          <p className="text-gray-600 dark:text-gray-400">Hesabınızı oluşturun</p>
         </div>
 
-        {/* E-posta */}
-        <div className="space-y-1">
-          <label htmlFor="email" className="label-soft">E-posta</label>
-          <input
-            id="email"
-            className="input"
-            type="email"
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            onBlur={() => {
-              if (!email.trim()) setEmailErr('E-posta zorunlu'); else setEmailErr('');
-            }}
-            autoComplete="off"
-            required
-            disabled={loading}
-            aria-invalid={!!emailErr}
-            aria-describedby={emailErr ? 'email-err' : undefined}
-          />
-          {emailErr && <p id="email-err" className="text-xs text-[rgb(var(--error))]">{emailErr}</p>}
-        </div>
+        <form onSubmit={onSubmit} className="reveal space-y-6 card shadow-xl border-0" aria-busy={loading}>
+          {err && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert" aria-live="polite">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-red-600 dark:text-red-400">{err}</p>
+              </div>
+            </div>
+          )}
 
-        {/* Şifre */}
-        <div className="space-y-1">
-          <label htmlFor="password" className="label-soft">Şifre</label>
-          <div className="relative">
+          {/* Ad */}
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Ad Soyad
+            </label>
             <input
-              id="password"
-              className="input pr-10"
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={(ev) => setPassword(ev.target.value)}
+              id="name"
+              className={`input ${nameErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              type="text"
+              value={name}
+              onChange={(ev) => setName(ev.target.value)}
               onBlur={() => {
-                if (!password) setPasswordErr('Şifre zorunlu');
-                else if (password.length < 8) setPasswordErr('Şifre en az 8 karakter olmalı');
-                else setPasswordErr('');
+                if (!name.trim()) setNameErr('Ad zorunlu');
+                else if (name.trim().length < 2) setNameErr('Ad en az 2 karakter olmalı');
+                else setNameErr('');
               }}
-              autoComplete="off"
+              placeholder="Adınızı ve soyadınızı girin"
+              maxLength={64}
               required
-              minLength={8}
               disabled={loading}
-              aria-invalid={!!passwordErr}
-              aria-describedby={passwordErr ? 'password-err' : undefined}
+              aria-invalid={!!nameErr}
+              aria-describedby={nameErr ? 'name-err' : undefined}
             />
-            <button
-              type="button"
-              onClick={() => setShowPw((v) => !v)}
-              className="absolute inset-y-0 right-0 px-3 text-sm label-soft hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] rounded-r-md"
-              aria-label={showPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
-              tabIndex={-1}
-            >
-              {showPw ? 'Gizle' : 'Göster'}
-            </button>
+            {nameErr && (
+              <p id="name-err" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {nameErr}
+              </p>
+            )}
           </div>
-          {passwordErr && <p id="password-err" className="text-xs text-[rgb(var(--error))]">{passwordErr}</p>}
-        </div>
 
-        <button disabled={loading} className="btn btn-primary w-full" type="submit">
-          {loading ? 'Gönderiliyor…' : 'Kayıt Ol'}
-        </button>
+          {/* E-posta */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              E-posta
+            </label>
+            <input
+              id="email"
+              className={`input ${emailErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              type="email"
+              value={email}
+              onChange={(ev) => setEmail(ev.target.value)}
+              onBlur={() => {
+                if (!email.trim()) setEmailErr('E-posta zorunlu');
+                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) setEmailErr('Geçerli bir e-posta adresi girin');
+                else setEmailErr('');
+              }}
+              placeholder="ornek@email.com"
+              autoComplete="email"
+              required
+              disabled={loading}
+              aria-invalid={!!emailErr}
+              aria-describedby={emailErr ? 'email-err' : undefined}
+            />
+            {emailErr && (
+              <p id="email-err" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {emailErr}
+              </p>
+            )}
+          </div>
 
-        <p className="text-sm label-soft">
-          Zaten hesabın var mı?{' '}
-          <Link href="/auth/login" className="nav-link">
-            Giriş yap
-          </Link>
-        </p>
-      </form>
+          {/* Şifre */}
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Şifre
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                className={`input pr-10 ${passwordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={(ev) => setPassword(ev.target.value)}
+                onBlur={() => {
+                  if (!password) setPasswordErr('Şifre zorunlu');
+                  else if (password.length < 6) setPasswordErr('Şifre en az 6 karakter olmalı');
+                  else setPasswordErr('');
+                }}
+                placeholder="En az 6 karakter"
+                autoComplete="new-password"
+                required
+                minLength={6}
+                disabled={loading}
+                aria-invalid={!!passwordErr}
+                aria-describedby={passwordErr ? 'password-err' : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-md"
+                aria-label={showPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                tabIndex={-1}
+              >
+                {showPw ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {passwordErr && (
+              <p id="password-err" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {passwordErr}
+              </p>
+            )}
+          </div>
+
+          {/* Şifre Tekrar */}
+          <div className="space-y-2">
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Şifre Tekrar
+            </label>
+            <div className="relative">
+              <input
+                id="confirmPassword"
+                className={`input pr-10 ${confirmPasswordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                type={showConfirmPw ? 'text' : 'password'}
+                value={confirmPassword}
+                onChange={(ev) => setConfirmPassword(ev.target.value)}
+                placeholder="Şifrenizi tekrar girin"
+                autoComplete="new-password"
+                required
+                disabled={loading}
+                aria-invalid={!!confirmPasswordErr}
+                aria-describedby={confirmPasswordErr ? 'confirm-password-err' : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPw((v) => !v)}
+                className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-md"
+                aria-label={showConfirmPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                tabIndex={-1}
+              >
+                {showConfirmPw ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {confirmPasswordErr && (
+              <p id="confirm-password-err" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {confirmPasswordErr}
+              </p>
+            )}
+            {confirmPassword && password && !confirmPasswordErr && (
+              <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Şifreler eşleşiyor
+              </p>
+            )}
+          </div>
+
+          <button 
+            disabled={loading} 
+            className="btn btn-primary w-full h-12 text-base font-medium" 
+            type="submit"
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Hesap Oluşturuluyor...
+              </div>
+            ) : (
+              'Hesap Oluştur'
+            )}
+          </button>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Zaten hesabınız var mı?{' '}
+              <Link href="/auth/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors">
+                Giriş yapın
+              </Link>
+            </p>
+          </div>
+        </form>
+      </div>
     </main>
   );
 }

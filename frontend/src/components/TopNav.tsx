@@ -19,11 +19,13 @@ export default function TopNav() {
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   // /transactions altında her alt sayfayı aktif say
   function isActive(href: string) {
     if (href === '/transactions' && pathname?.startsWith('/transactions')) return true;
+    if (href === '/profile' && pathname?.startsWith('/profile')) return true;
     return pathname === href;
   }
 
@@ -44,6 +46,19 @@ export default function TopNav() {
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  // Profil dropdown'ını dışarı tıklayınca kapat
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.profile-dropdown')) {
+        setProfileDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header
@@ -103,12 +118,59 @@ export default function TopNav() {
 
         {/* Actions */}
         <div className="hidden md:flex items-center gap-2">
-          <button
-            onClick={onLogout}
-            className="btn btn-outline h-9 px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]"
-          >
-            Çıkış
-          </button>
+          {/* Profil Dropdown */}
+          <div className="relative profile-dropdown">
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className={[
+                'btn btn-outline h-9 px-3 flex items-center gap-2',
+                'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]',
+                isActive('/profile') ? 'border-[hsl(var(--primary))] text-[hsl(var(--primary))]' : '',
+              ].join(' ')}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              Profil
+              <svg className={`w-4 h-4 transition-transform ${profileDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Dropdown Menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-[rgb(var(--card))] border border-black/10 rounded-lg shadow-lg py-1 z-50">
+                <Link
+                  href="/profile"
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setProfileDropdownOpen(false)}
+                >
+                  Profil Bilgileri
+                </Link>
+                <Link
+                  href="/profile/edit"
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setProfileDropdownOpen(false)}
+                >
+                  Profil Düzenle
+                </Link>
+                <Link
+                  href="/profile/change-password"
+                  className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  onClick={() => setProfileDropdownOpen(false)}
+                >
+                  Şifre Değiştir
+                </Link>
+                <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>
+                <button
+                  onClick={onLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Çıkış Yap
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mobile toggler */}
@@ -153,6 +215,17 @@ export default function TopNav() {
               </Link>
             );
           })}
+          <Link
+            href="/profile"
+            className={[
+              'nav-link rounded-md px-3 py-2',
+              isActive('/profile') ? 'nav-link-active text-foreground' : 'text-muted-foreground',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))]',
+            ].join(' ')}
+            aria-current={isActive('/profile') ? 'page' : undefined}
+          >
+            Profil
+          </Link>
           <button
             onClick={onLogout}
             className="btn btn-outline h-9 mt-1"

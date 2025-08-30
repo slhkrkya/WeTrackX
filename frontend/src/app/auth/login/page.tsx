@@ -25,7 +25,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { show } = useToast();
 
-  // Varsayılan değerler kaldırıldı
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -34,6 +33,10 @@ export default function LoginPage() {
 
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>('');
+
+  // alan bazlı hatalar
+  const [emailErr, setEmailErr] = useState<string>('');
+  const [passwordErr, setPasswordErr] = useState<string>('');
 
   // Remember ayarını ve e-postayı yükle
   useEffect(() => {
@@ -55,12 +58,37 @@ export default function LoginPage() {
     } catch {}
   }, [remember]);
 
+  function validate() {
+    let ok = true;
+
+    if (!email.trim()) {
+      setEmailErr('E-posta zorunlu');
+      ok = false;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailErr('Geçerli bir e-posta adresi girin');
+      ok = false;
+    } else {
+      setEmailErr('');
+    }
+
+    if (!password) {
+      setPasswordErr('Şifre zorunlu');
+      ok = false;
+    } else {
+      setPasswordErr('');
+    }
+
+    return ok;
+  }
+
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (loading) return;
 
-    setLoading(true);
     setErr('');
+    if (!validate()) return;
+
+    setLoading(true);
     try {
       const res = await api<LoginRes>('/auth/login', {
         method: 'POST',
@@ -86,88 +114,162 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-dvh flex items-center justify-center p-6">
-      <form
-        onSubmit={onSubmit}
-        className="reveal w-full max-w-sm space-y-5 card"
-        aria-busy={loading}
-      >
-        <h1 className="text-2xl font-bold">Giriş Yap</h1>
-
-        {err && (
-          <div className="card ring-1 ring-[rgb(var(--error))]/25" role="alert" aria-live="polite">
-            <p className="text-sm text-[rgb(var(--error))]">{err}</p>
+    <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="w-full max-w-md">
+        {/* Logo ve Başlık */}
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
           </div>
-        )}
-
-        {/* E-posta */}
-        <div className="space-y-1">
-          <label htmlFor="email" className="label-soft">E-posta</label>
-          <input
-            id="email"
-            className="input"
-            type="email"
-            value={email}
-            onChange={(ev) => setEmail(ev.target.value)}
-            autoComplete="off"
-            required
-            disabled={loading}
-          />
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">WeTrackX</h1>
+          <p className="text-gray-600 dark:text-gray-400">Hesabınıza giriş yapın</p>
         </div>
 
-        {/* Şifre + göster/gizle */}
-        <div className="space-y-1">
-          <label htmlFor="password" className="label-soft">Şifre</label>
-          <div className="relative">
+        <form onSubmit={onSubmit} className="reveal space-y-6 card shadow-xl border-0" aria-busy={loading}>
+          {err && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert" aria-live="polite">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <p className="text-sm text-red-600 dark:text-red-400">{err}</p>
+              </div>
+            </div>
+          )}
+
+          {/* E-posta */}
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              E-posta
+            </label>
             <input
-              id="password"
-              className="input pr-10"
-              type={showPw ? 'text' : 'password'}
-              value={password}
-              onChange={(ev) => setPassword(ev.target.value)}
-              autoComplete="off"
+              id="email"
+              className={`input ${emailErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              type="email"
+              value={email}
+              onChange={(ev) => setEmail(ev.target.value)}
+              onBlur={() => {
+                if (!email.trim()) setEmailErr('E-posta zorunlu');
+                else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) setEmailErr('Geçerli bir e-posta adresi girin');
+                else setEmailErr('');
+              }}
+              placeholder="ornek@email.com"
+              autoComplete="email"
               required
-              minLength={8}
               disabled={loading}
+              aria-invalid={!!emailErr}
+              aria-describedby={emailErr ? 'email-err' : undefined}
             />
-            <button
-              type="button"
-              onClick={() => setShowPw((v) => !v)}
-              className="absolute inset-y-0 right-0 px-3 text-sm label-soft hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] rounded-r-md"
-              aria-label={showPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
-              tabIndex={-1}
-            >
-              {showPw ? 'Gizle' : 'Göster'}
-            </button>
+            {emailErr && (
+              <p id="email-err" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {emailErr}
+              </p>
+            )}
           </div>
-        </div>
 
-        {/* Beni hatırla + Kayıt bağlantısı */}
-        <div className="flex items-center justify-between pt-1">
-          <label className="label cursor-pointer gap-2 flex items-center">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-sm"
-              checked={remember}
-              onChange={(e) => setRemember(e.target.checked)}
-              disabled={loading}
-            />
-            <span className="label-soft text-sm">Beni hatırla</span>
-          </label>
+          {/* Şifre */}
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              Şifre
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                className={`input pr-10 ${passwordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                type={showPw ? 'text' : 'password'}
+                value={password}
+                onChange={(ev) => setPassword(ev.target.value)}
+                onBlur={() => {
+                  if (!password) setPasswordErr('Şifre zorunlu');
+                  else setPasswordErr('');
+                }}
+                placeholder="Şifrenizi girin"
+                autoComplete="current-password"
+                required
+                disabled={loading}
+                aria-invalid={!!passwordErr}
+                aria-describedby={passwordErr ? 'password-err' : undefined}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw((v) => !v)}
+                className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-md"
+                aria-label={showPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
+                tabIndex={-1}
+              >
+                {showPw ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                )}
+              </button>
+            </div>
+            {passwordErr && (
+              <p id="password-err" className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                {passwordErr}
+              </p>
+            )}
+          </div>
 
-          <Link href="/auth/register" className="nav-link text-sm">
-            Kayıt ol
-          </Link>
-        </div>
+          {/* Beni hatırla + Kayıt bağlantısı */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                checked={remember}
+                onChange={(e) => setRemember(e.target.checked)}
+                disabled={loading}
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Beni hatırla</span>
+            </label>
 
-        <button disabled={loading} className="btn btn-primary w-full" type="submit">
-          {loading ? 'Gönderiliyor…' : 'Giriş Yap'}
-        </button>
+            <Link 
+              href="/auth/register" 
+              className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 transition-colors"
+            >
+              Kayıt ol
+            </Link>
+          </div>
 
-        <p className="text-xs label-soft">
-          Şifreni mi unuttun? <span className="opacity-80">Yakında “şifre sıfırla” eklenecek.</span>
-        </p>
-      </form>
+          <button 
+            disabled={loading} 
+            className="btn btn-primary w-full h-12 text-base font-medium" 
+            type="submit"
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Giriş Yapılıyor...
+              </div>
+            ) : (
+              'Giriş Yap'
+            )}
+          </button>
+
+          <div className="text-center">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Şifrenizi mi unuttunuz?{' '}
+              <span className="opacity-80">Yakında "şifre sıfırla" eklenecek.</span>
+            </p>
+          </div>
+        </form>
+      </div>
     </main>
   );
 }
