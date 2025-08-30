@@ -9,7 +9,6 @@ type NavItem = { label: string; href: string };
 
 const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Hesaplar', href: '/accounts' },
   { label: 'Kategoriler', href: '/categories' },
   { label: 'İşlemler', href: '/transactions' },
   { label: 'Yeni İşlem', href: '/transactions/new' },
