@@ -1,5 +1,4 @@
 import { api } from './api';
-import { type CategoryKind } from './types';
 
 export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 

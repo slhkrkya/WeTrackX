@@ -9,7 +9,6 @@ import RecentTransactions from '@/components/dashboard/RecentTransactions';
 import {
   ReportsAPI,
   type BalanceItem,
-  type MonthlyPoint,
   type CategoryTotal,
   type TxItem,
   type Cashflow,
@@ -23,7 +22,6 @@ export default function DashboardPage() {
   const [err, setErr] = useState<string>('');
 
   const [balances, setBalances] = useState<BalanceItem[]>([]);
-  const [series, setSeries] = useState<MonthlyPoint[]>([]);
   const [catIncome, setCatIncome] = useState<CategoryTotal[]>([]);
   const [catExpense, setCatExpense] = useState<CategoryTotal[]>([]);
   const [recent, setRecent] = useState<TxItem[]>([]);
@@ -32,16 +30,14 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [b, s, ci, ce, r, cf] = await Promise.all([
+        const [b, ci, ce, r, cf] = await Promise.all([
           ReportsAPI.balances(),
-          ReportsAPI.monthlySeries(6),
           ReportsAPI.categoryTotals('INCOME'),
           ReportsAPI.categoryTotals('EXPENSE'),
           ReportsAPI.recentTransactions(10),
           ReportsAPI.cashflow(),
         ]);
         setBalances(b);
-        setSeries(s);
         setCatIncome(ci);
         setCatExpense(ce);
         setRecent(r.items);
@@ -115,9 +111,9 @@ export default function DashboardPage() {
 
       {/* Aylık Seri */}
       <section className="reveal space-y-3">
-        <h2 className="text-lg font-semibold text-foreground">Aylık Seri (6 Ay)</h2>
+        <h2 className="text-lg font-semibold text-foreground">Finansal Analiz</h2>
         <div className="card">
-          <MonthlySeriesChart data={series} />
+          <MonthlySeriesChart incomeCategories={catIncome} expenseCategories={catExpense} />
         </div>
       </section>
 

@@ -1,215 +1,520 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
-import { type MonthlyPoint } from '@/lib/reports';
+import { useMemo, useState, useEffect } from 'react';
+import { type CategoryTotal } from '@/lib/reports';
+import { fmtMoney } from '@/lib/format';
+import { ReportsAPI } from '@/lib/reports';
 
-type Props = { data: MonthlyPoint[] };
+type Props = { 
+  incomeCategories: CategoryTotal[];
+  expenseCategories: CategoryTotal[];
+};
 
-export default function MonthlySeriesChart({ data }: Props) {
-  // --- Ölçek & geometri ---
-  const safeData = useMemo(() => data ?? [], [data]);
-  const months = useMemo(() => safeData.map((d) => d.month), [safeData]);
-  const incomes = useMemo(() => safeData.map((d) => Number(d.income)), [safeData]);
-  const expenses = useMemo(() => safeData.map((d) => Number(d.expense)), [safeData]);
-  const hasData = months.length > 0;
-  const maxVal = Math.max(...(hasData ? incomes : [0]), ...(hasData ? expenses : [0]), 1);
+type PieSlice = {
+  id: string;
+  label: string;
+  value: number;
+  percentage: number;
+  startAngle: number;
+  endAngle: number;
+  color: string;
+  isHovered: boolean;
+};
 
-  // Sabit viewBox (responsive boyutlandırma için), içeride padding ile iç alan
-  const W = 640;
-  const H = 240;
-  const pad = 32;
-  const innerW = W - pad * 2;
-  const innerH = H - pad * 2;
-  const stepX = innerW / Math.max(months.length - 1, 1);
+type BarData = {
+  month: string;
+  income: number;
+  expense: number;
+};
 
-  const y = (v: number) => H - pad - (v / maxVal) * innerH;
-  const x = (i: number) => pad + i * stepX;
+export default function MonthlySeriesChart({ incomeCategories, expenseCategories }: Props) {
+  const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
+  const [monthlyData, setMonthlyData] = useState<BarData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Yol oluşturucu
-  const line = (vals: number[]) =>
-    vals.map((v, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(v)}`).join(' ');
+  // Gerçek aylık verileri al
+  useEffect(() => {
+    const fetchMonthlyData = async () => {
+      try {
+        setLoading(true);
+        const series = await ReportsAPI.monthlySeries(6);
+        
+        const data = series.map(item => ({
+          month: new Date(item.month + '-01').toLocaleDateString('tr-TR', { 
+            month: 'short', 
+            year: '2-digit' 
+          }),
+          income: Number(item.income),
+          expense: Number(item.expense)
+        }));
+        
+        setMonthlyData(data);
+      } catch (error) {
+        console.error('Aylık veri alınamadı:', error);
+        setMonthlyData([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Area (taban çizgisine kadar kapama)
-  const area = (vals: number[]) =>
-    vals.length > 0
-      ? `M ${x(0)} ${y(vals[0])} ` +
-        vals.slice(1).map((v, i) => `L ${x(i + 1)} ${y(v)}`).join(' ') +
-        ` L ${x(vals.length - 1)} ${H - pad} L ${x(0)} ${H - pad} Z`
-      : '';
+    fetchMonthlyData();
+  }, []);
 
-  // --- Tooltip state ---
-  const svgRef = useRef<SVGSVGElement | null>(null);
-  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  // Ana pasta grafiği için veri hesaplama
+  const mainChartData = useMemo(() => {
+    const totalIncome = incomeCategories.reduce((sum, cat) => sum + Number(cat.total), 0);
+    const totalExpense = expenseCategories.reduce((sum, cat) => sum + Number(cat.total), 0);
+    const total = totalIncome + totalExpense;
 
-  function nearestIndexFromEvent(e: React.MouseEvent<SVGSVGElement>) {
-    const svg = svgRef.current;
-    if (!svg) return null;
-    const rect = svg.getBoundingClientRect();
-    const px = e.clientX - rect.left;
-    // viewBox -> pixel oranı
-    const scaleX = W / rect.width;
-    const viewX = px * scaleX;
-    const i = Math.round((viewX - pad) / stepX);
-    if (i < 0 || i > months.length - 1) return null;
-    return i;
-  }
+    if (total === 0) return [];
 
-  const showIdx = hoverIdx ?? (hasData ? months.length - 1 : null); // Hover yoksa son noktayı referans al
+    const incomePercentage = (totalIncome / total) * 100;
+    const expensePercentage = (totalExpense / total) * 100;
 
-  // X ekseni etiketlerini dar ekranda seyrek göster
-  const labelEvery = months.length > 8 ? 2 : 1;
+    return [
+      {
+        id: 'income',
+        label: 'Gelir',
+        value: totalIncome,
+        percentage: incomePercentage,
+        startAngle: 0,
+        endAngle: (incomePercentage / 100) * 360,
+        color: '#22C55E',
+        isHovered: hoveredSlice === 'income'
+      },
+      {
+        id: 'expense',
+        label: 'Gider',
+        value: totalExpense,
+        percentage: expensePercentage,
+        startAngle: (incomePercentage / 100) * 360,
+        endAngle: 360,
+        color: '#EF4444',
+        isHovered: hoveredSlice === 'expense'
+      }
+    ];
+  }, [incomeCategories, expenseCategories, hoveredSlice]);
 
-  return (
-    <div className="reveal card overflow-hidden">
-      {/* Başlık + Lejant */}
-      <div className="mb-3 flex items-center justify-between px-3 sm:px-4">
-        <div className="text-sm font-medium text-foreground">Aylık Gelir / Gider</div>
-        <div className="flex items-center gap-4 text-xs">
-          <span className="inline-flex items-center gap-2 text-[rgb(var(--success))]">
-            <span className="inline-block h-3 w-3 rounded-full bg-current shadow-sm" /> Gelir
-          </span>
-          <span className="inline-flex items-center gap-2 text-[rgb(var(--error))]">
-            <span className="inline-block h-3 w-3 rounded-full bg-current shadow-sm" /> Gider
-          </span>
+  // Gelir kategorileri pasta grafiği
+  const incomeChartData = useMemo(() => {
+    const total = incomeCategories.reduce((sum, cat) => sum + Number(cat.total), 0);
+    
+    // Eğer hiç gelir kategorisi yoksa, "Gelir Yok" dilimi göster
+    if (incomeCategories.length === 0) {
+      return [{
+        id: 'no-income',
+        label: 'Gelir Yok',
+        value: 0,
+        percentage: 100,
+        startAngle: 0,
+        endAngle: 360,
+        color: '#E5E7EB',
+        isHovered: hoveredSlice === 'no-income'
+      }];
+    }
+    
+    // Toplam 0 olsa bile kategorileri göster
+    const slices: PieSlice[] = [];
+    let currentAngle = 0;
+
+    incomeCategories.forEach((cat, index) => {
+      const percentage = total === 0 ? 100 : (Number(cat.total) / total) * 100;
+      const angle = (percentage / 100) * 360;
+      const color = `hsl(${120 + index * 30}, 70%, 50%)`;
+      
+      slices.push({
+        id: `income-${cat.name}`,
+        label: cat.name,
+        value: Number(cat.total),
+        percentage,
+        startAngle: currentAngle,
+        endAngle: currentAngle + angle,
+        color,
+        isHovered: hoveredSlice === `income-${cat.name}`
+      });
+      currentAngle += angle;
+    });
+
+    return slices;
+  }, [incomeCategories, hoveredSlice]);
+
+  // Gider kategorileri pasta grafiği
+  const expenseChartData = useMemo(() => {
+    const total = expenseCategories.reduce((sum, cat) => sum + Number(cat.total), 0);
+    
+    // Eğer hiç gider kategorisi yoksa, "Gider Yok" dilimi göster
+    if (expenseCategories.length === 0) {
+      return [{
+        id: 'no-expense',
+        label: 'Gider Yok',
+        value: 0,
+        percentage: 100,
+        startAngle: 0,
+        endAngle: 360,
+        color: '#E5E7EB',
+        isHovered: hoveredSlice === 'no-expense'
+      }];
+    }
+    
+    if (total === 0) return [];
+
+    const slices: PieSlice[] = [];
+    let currentAngle = 0;
+
+    expenseCategories.forEach((cat, index) => {
+      const percentage = (Number(cat.total) / total) * 100;
+      const angle = (percentage / 100) * 360;
+      const color = `hsl(${0 + index * 30}, 70%, 50%)`;
+      
+      slices.push({
+        id: `expense-${cat.name}`,
+        label: cat.name,
+        value: Number(cat.total),
+        percentage,
+        startAngle: currentAngle,
+        endAngle: currentAngle + angle,
+        color,
+        isHovered: hoveredSlice === `expense-${cat.name}`
+      });
+      currentAngle += angle;
+    });
+
+    return slices;
+  }, [expenseCategories, hoveredSlice]);
+
+  // Pasta dilimi çizimi
+  const createPieSlice = (slice: PieSlice, radius: number, centerX: number, centerY: number) => {
+    const startRad = (slice.startAngle - 90) * (Math.PI / 180);
+    const endRad = (slice.endAngle - 90) * (Math.PI / 180);
+    
+    const x1 = centerX + radius * Math.cos(startRad);
+    const y1 = centerY + radius * Math.sin(startRad);
+    const x2 = centerX + radius * Math.cos(endRad);
+    const y2 = centerY + radius * Math.sin(endRad);
+    
+    const largeArcFlag = slice.endAngle - slice.startAngle > 180 ? 1 : 0;
+    
+    const path = [
+      `M ${centerX} ${centerY}`,
+      `L ${x1} ${y1}`,
+      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+      'Z'
+    ].join(' ');
+    
+    return path;
+  };
+
+  // Pasta grafiği komponenti
+  const PieChart = ({ 
+    data, 
+    title, 
+    size = 120, 
+    onSliceHover 
+  }: { 
+    data: PieSlice[]; 
+    title: string; 
+    size?: number; 
+    onSliceHover: (id: string | null) => void;
+  }) => {
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const radius = (size / 2) - 10;
+
+    return (
+      <div className="flex flex-col items-center">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{title}</h4>
+        <div className="relative">
+          <svg width={size} height={size} className="transform transition-transform duration-200">
+            {data.map((slice) => (
+              <path
+                key={slice.id}
+                d={createPieSlice(slice, radius, centerX, centerY)}
+                fill={slice.color}
+                stroke="white"
+                strokeWidth="2"
+                className="transition-all duration-200 cursor-pointer"
+                style={{
+                  transform: slice.isHovered ? 'scale(1.05)' : 'scale(1)',
+                  transformOrigin: 'center',
+                  filter: slice.isHovered ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'none'
+                }}
+                onMouseEnter={() => onSliceHover(slice.id)}
+                onMouseLeave={() => onSliceHover(null)}
+              />
+            ))}
+          </svg>
+          {data.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">
+              Veri yok
+            </div>
+          )}
         </div>
       </div>
-      {!hasData ? (
-        <div className="subtext text-sm px-4 pb-4 text-center">Grafik için veri yok.</div>
-      ) : null}
+    );
+  };
 
-      <svg
-        ref={svgRef}
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full h-auto touch-pan-x"
-        role="img"
-        aria-label="Aylık gelir-gider çizgi grafiği"
-        onMouseMove={(e) => setHoverIdx(nearestIndexFromEvent(e))}
-        onMouseLeave={() => setHoverIdx(null)}
-      >
-        {/* Grid: 4 yatay çizgi + eksenler */}
-        <g className="text-foreground/20">
-          <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="currentColor" opacity="0.3" />
-          <line x1={pad} y1={pad} x2={pad} y2={H - pad} stroke="currentColor" opacity="0.15" />
-          {[0.25, 0.5, 0.75, 1].map((p, i) => (
-            <line
-              key={i}
-              x1={pad}
-              x2={W - pad}
-              y1={H - pad - innerH * p}
-              y2={H - pad - innerH * p}
-              stroke="currentColor"
-              opacity="0.12"
+  // Lejant komponenti
+  const Legend = ({ data, title }: { data: PieSlice[]; title: string }) => (
+    <div className="space-y-2">
+      <h5 className="text-xs font-medium text-gray-600 dark:text-gray-400">{title}</h5>
+      <div className="space-y-1">
+        {data.map((slice) => (
+          <div
+            key={slice.id}
+            className="flex items-center gap-2 text-xs cursor-pointer transition-colors"
+            onMouseEnter={() => setHoveredSlice(slice.id)}
+            onMouseLeave={() => setHoveredSlice(null)}
+          >
+            <div
+              className="w-3 h-3 rounded-full border border-white shadow-sm"
+              style={{ backgroundColor: slice.color }}
             />
-          ))}
-        </g>
+            <span className="text-gray-700 dark:text-gray-300">{slice.label}</span>
+            <span className="text-gray-500 dark:text-gray-400 ml-auto">
+              {slice.percentage.toFixed(1)}%
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 
-        {/* Areas (hafif) */}
-        {hasData && <path d={area(incomes)} className="fill-[rgb(var(--success))] opacity-10" />}
-        {hasData && <path d={area(expenses)} className="fill-[rgb(var(--error))] opacity-10" />}
+  // Bar Chart komponenti
+  const BarChart = ({ data }: { data: BarData[] }) => {
+    if (data.length === 0) {
+      return (
+        <div className="w-full">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 text-center">
+            Gelir Gider Karşılaştırması
+          </h4>
+          <div className="flex items-center justify-center h-48 text-gray-500">
+            <div className="text-center">
+              <p className="text-sm">Henüz aylık veri yok</p>
+              <p className="text-xs text-gray-400">İşlem yaptığınızda grafik burada görünecek</p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-        {/* Lines */}
-        {hasData && (
-          <path
-            d={line(incomes)}
-            className="stroke-[rgb(var(--success))]"
-            fill="none"
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
+    // Grafik boyutları
+    const chartHeight = 300;
+    const barWidth = 6; // İnce barlar
+    
+    // Y ekseni hesaplamaları - 10 parçalı
+    const maxIncome = Math.max(...data.map(d => d.income));
+    const maxExpense = Math.max(...data.map(d => d.expense));
+    const maxValue = Math.max(maxIncome, maxExpense, 1);
+    const yStep = maxValue / 10;
+    
+    // Bar pozisyonları hesaplama
+    const getBarHeight = (value: number) => {
+      return (value / maxValue) * chartHeight;
+    };
+
+    return (
+      <div className="w-full">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 text-center">
+          Gelir Gider Karşılaştırması
+        </h4>
+        
+        {loading ? (
+          <div className="flex items-center justify-center h-48">
+            <div className="text-center">
+              <div className="w-8 h-8 mx-auto mb-2 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+              <p className="text-sm text-gray-500">Yükleniyor...</p>
+            </div>
+          </div>
+        ) : (
+          <div className="relative w-full mt-6" style={{ height: chartHeight + 80 }}>
+            {/* Y ekseni çizgileri ve etiketleri - 10 parçalı */}
+            <div className="absolute left-0 top-0 bottom-0 w-20">
+              {Array.from({ length: 11 }, (_, i) => {
+                const value = i * yStep;
+                const y = chartHeight - (i * chartHeight / 10);
+                return (
+                  <div key={i} className="absolute flex items-center" style={{ top: y }}>
+                    <div className="w-16 h-px bg-gray-200"></div>
+                    <span className="text-xs text-gray-500 ml-2 whitespace-nowrap">
+                      {fmtMoney(value, 'TRY')}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            
+            {/* Ana grafik alanı */}
+            <div className="ml-20 relative" style={{ height: chartHeight }}>
+              {/* Y ekseni çizgileri - 10 parçalı */}
+              {Array.from({ length: 11 }, (_, i) => (
+                <div
+                  key={i}
+                  className="absolute w-full h-px bg-gray-100"
+                  style={{ top: i * chartHeight / 10 }}
+                />
+              ))}
+              
+              {/* Barlar */}
+              <div className="relative h-full flex items-end justify-between px-4">
+                {data.map((item, index) => {
+                  // Negatif değerleri pozitife çevir
+                  const income = Math.abs(item.income);
+                  const expense = Math.abs(item.expense);
+                  const incomeHeight = getBarHeight(income);
+                  const expenseHeight = getBarHeight(expense);
+                  const barSpacing = 100 / data.length;
+                  
+                  return (
+                    <div key={index} className="flex flex-col items-center" style={{ width: `${barSpacing}%` }}>
+                      {/* Gelir ve Gider barları yan yana - gelir solda, gider sağda */}
+                      <div className="flex items-end gap-2 w-full justify-center">
+                        {/* Gelir barı (solda) */}
+                        {income > 0 && (
+                          <div className="relative">
+                            <div
+                              className="bg-green-500 rounded-t transition-all duration-200 hover:bg-green-600"
+                              style={{
+                                width: barWidth,
+                                height: Math.max(incomeHeight, 8), // Minimum 8px
+                                minHeight: '8px'
+                              }}
+                              title={`Gelir: ${fmtMoney(income, 'TRY')}`}
+                            />
+                            {/* Değer etiketi - başlıktan uzak */}
+                            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-green-600 font-medium whitespace-nowrap">
+                              {fmtMoney(income, 'TRY')}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Gider barı (sağda) */}
+                        {expense > 0 && (
+                          <div className="relative">
+                            <div
+                              className="bg-red-500 rounded-t transition-all duration-200 hover:bg-red-600"
+                              style={{
+                                width: barWidth,
+                                height: Math.max(expenseHeight, 8), // Minimum 8px
+                                minHeight: '8px'
+                              }}
+                              title={`Gider: ${fmtMoney(expense, 'TRY')}`}
+                            />
+                            {/* Değer etiketi - başlıktan uzak */}
+                            <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-xs text-red-600 font-medium whitespace-nowrap">
+                              {fmtMoney(expense, 'TRY')}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Tarih etiketi */}
+                      <div className="absolute -bottom-8 text-xs text-gray-600 dark:text-gray-400 text-center whitespace-nowrap">
+                        {item.month}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            {/* X ekseni */}
+            <div className="ml-20 mt-4 h-px bg-gray-300"></div>
+          </div>
         )}
-        {hasData && (
-          <path
-            d={line(expenses)}
-            className="stroke-[rgb(var(--error))]"
-            fill="none"
-            strokeWidth={3}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        )}
+        
+        {/* Legend */}
+        <div className="flex justify-center gap-2 mt-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-green-500 rounded"></div>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Gelir</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-red-500 rounded"></div>
+            <span className="text-sm text-gray-700 dark:text-gray-300">Gider</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
-        {/* Noktalar (klavye ile odaklanabilir) */}
-        <g>
-          {incomes.map((v, i) => (
-            <circle
-              key={`i-${i}`}
-              cx={x(i)}
-              cy={y(v)}
-              r={i === showIdx ? 5 : 3.5}
-              className="fill-[rgb(var(--success))] stroke-white stroke-2 shadow-sm"
-              tabIndex={0}
-              onFocus={() => setHoverIdx(i)}
-              onBlur={() => setHoverIdx(null)}
-            />
-          ))}
-          {expenses.map((v, i) => (
-            <circle
-              key={`e-${i}`}
-              cx={x(i)}
-              cy={y(v)}
-              r={i === showIdx ? 5 : 3.5}
-              className="fill-[rgb(var(--error))] stroke-white stroke-2 shadow-sm"
-              tabIndex={0}
-              onFocus={() => setHoverIdx(i)}
-              onBlur={() => setHoverIdx(null)}
-            />
-          ))}
-        </g>
+  const hasData = mainChartData.length > 0 || incomeChartData.length > 0 || expenseChartData.length > 0;
 
-        {/* Dikey rehber çizgisi + tooltip */}
-        {showIdx != null && hasData && (
-          <>
-            <line
-              x1={x(showIdx)}
-              x2={x(showIdx)}
-              y1={pad}
-              y2={H - pad}
-              className="stroke-foreground/30"
-              strokeDasharray="3 3"
-              strokeWidth={1}
-            />
-            {/* Tooltip kutusu */}
-            <foreignObject
-              x={Math.min(Math.max(x(showIdx) - 80, pad), W - pad - 160)}
-              y={pad}
-              width="160"
-              height="64"
-            >
-                             <div className="rounded-lg shadow-lg ring-1 ring-black/20 bg-[rgb(var(--card))] p-3 text-xs leading-4">
-                 <div className="font-medium text-foreground mb-2">{months[showIdx]}</div>
-                 <div className="flex items-center gap-3">
-                   <span className="inline-flex items-center gap-2 text-[rgb(var(--success))]">
-                     <span className="inline-block h-2 w-2 rounded-full bg-current" /> {incomes[showIdx].toLocaleString()}
-                   </span>
-                   <span className="inline-flex items-center gap-2 text-[rgb(var(--error))]">
-                     <span className="inline-block h-2 w-2 rounded-full bg-current" /> {expenses[showIdx].toLocaleString()}
-                   </span>
-                 </div>
-               </div>
-            </foreignObject>
-          </>
-        )}
+  return (
+    <div className="reveal card overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+      {/* Modern Header */}
+      <div className="p-6 pb-4">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Finansal Analiz</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Gelir ve gider dağılımları</p>
+          </div>
+        </div>
+      </div>
 
-        {/* X ekseni etiketleri */}
-        <g className="text-foreground/70">
-          {months.map((m, i) => {
-            if (i % labelEvery !== 0) return null;
-            const short = m.slice(2); // YY-MM
-            return (
-              <text
-                key={`${m}-${i}`}
-                x={x(i)}
-                y={H - pad + 16}
-                fontSize="10"
-                textAnchor="middle"
-              >
-                {short}
-              </text>
-            );
-          })}
-        </g>
-      </svg>
+      {loading ? (
+        <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p className="text-sm">Veriler yükleniyor...</p>
+          </div>
+        </div>
+      ) : !hasData ? (
+        <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p className="text-sm">Henüz veri yok</p>
+            <p className="text-xs text-gray-400">İşlem yaptığınızda grafikler burada görünecek</p>
+          </div>
+        </div>
+      ) : (
+        <div className="px-6 pb-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            {/* Bar Chart - Sol Taraf */}
+            <div className="xl:col-span-1">
+              <BarChart data={monthlyData} />
+            </div>
+
+            {/* Pasta Grafikleri - Sağ Taraf */}
+            <div className="xl:col-span-2">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gelir Kategorileri */}
+                <div className="flex flex-col items-center">
+                  <PieChart
+                    data={incomeChartData}
+                    title="Gelir Kategorileri"
+                    size={300}
+                    onSliceHover={setHoveredSlice}
+                  />
+                  <div className="mt-4 w-full max-w-xs">
+                    <Legend data={incomeChartData} title="Gelir Kategorileri" />
+                  </div>
+                </div>
+
+                {/* Gider Kategorileri */}
+                <div className="flex flex-col items-center">
+                  <PieChart
+                    data={expenseChartData}
+                    title="Gider Kategorileri"
+                    size={300}
+                    onSliceHover={setHoveredSlice}
+                  />
+                  <div className="mt-4 w-full max-w-xs">
+                    <Legend data={expenseChartData} title="Gider Kategorileri" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
