@@ -2,6 +2,7 @@
 
 import { type AccountDTO } from '@/lib/accounts';
 import { ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
+import Link from 'next/link';
 
 type Props = { items: AccountDTO[] };
 
@@ -15,8 +16,20 @@ const typeColor: Record<AccountDTO['type'], string> = {
 export default function AccountsList({ items }: Props) {
   if (!items?.length) {
     return (
-      <div className="reveal card text-sm">
-        Hiç hesap yok. Sağ üstten <span className="font-medium">&ldquo;Yeni Hesap&rdquo;</span> oluşturabilirsin.
+      <div className="reveal card text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold mb-2">Henüz Hesap Yok</h3>
+        <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
+          Finansal takibinize başlamak için önce bir hesap oluşturmanız gerekiyor. 
+          Hesap oluşturduktan sonra işlemlerinizi kaydetmeye başlayabilirsiniz.
+        </p>
+        <Link href="/accounts/new" className="btn btn-primary">
+          Hesap Oluştur
+        </Link>
       </div>
     );
   }

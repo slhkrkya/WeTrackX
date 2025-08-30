@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { setAuth, type AuthUser } from '@/lib/auth';
+import { useToast } from '@/components/ToastProvider';
 
 type LoginRes = { user: AuthUser; token: string };
 
@@ -22,6 +23,7 @@ const LS_KEY_EMAIL = 'wt:rememberEmail';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { show } = useToast();
 
   // Varsayılan değerler kaldırıldı
   const [email, setEmail] = useState('');
@@ -72,9 +74,12 @@ export default function LoginPage() {
         else localStorage.removeItem(LS_KEY_EMAIL);
       } catch {}
 
+      show('Başarıyla giriş yaptınız!', 'success');
       router.replace('/dashboard');
     } catch (e: unknown) {
-      setErr(getErrorMessage(e));
+      const errorMessage = getErrorMessage(e);
+      setErr(errorMessage);
+      show(errorMessage, 'error');
     } finally {
       setLoading(false);
     }

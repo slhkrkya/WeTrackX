@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { setAuth, type AuthUser } from '@/lib/auth';
+import { useToast } from '@/components/ToastProvider';
 
 type RegisterRes = { user: AuthUser; token: string };
 
@@ -19,6 +20,7 @@ function getErrorMessage(e: unknown) {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { show } = useToast();
 
   // Varsayılan değerler kaldırıldı
   const [name, setName] = useState('');
@@ -81,9 +83,12 @@ export default function RegisterPage() {
         jsonBody: { email: email.trim(), password, name: name.trim() },
       });
       setAuth(res.token, res.user);
+      show('Hesabınız başarıyla oluşturuldu!', 'success');
       router.replace('/dashboard');
     } catch (e: unknown) {
-      setErr(getErrorMessage(e));
+      const errorMessage = getErrorMessage(e);
+      setErr(errorMessage);
+      show(errorMessage, 'error');
       setLoading(false);
     }
   }

@@ -5,11 +5,13 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AccountsAPI } from '@/lib/accounts';
 import { type AccountType, ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
+import { useToast } from '@/components/ToastProvider';
 
 const TYPES: AccountType[] = ['BANK', 'CASH', 'CARD', 'WALLET'];
 
 export default function NewAccountPage() {
   const router = useRouter();
+  const { show } = useToast();
 
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('BANK');
@@ -37,9 +39,12 @@ export default function NewAccountPage() {
         currency: 'TRY', // Her zaman TRY olacak
       };
       await AccountsAPI.create(payload);
+      show('Hesap başarıyla oluşturuldu!', 'success');
       router.replace('/accounts');
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e));
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setErr(errorMessage);
+      show(errorMessage, 'error');
       setLoading(false);
     }
   }

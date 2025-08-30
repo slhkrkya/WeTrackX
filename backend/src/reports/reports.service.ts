@@ -2,11 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from '../transactions/transaction.entity';
+import { Category } from '../categories/category.entity';
 
 @Injectable()
 export class ReportsService {
   constructor(
     @InjectRepository(Transaction) private readonly txRepo: Repository<Transaction>,
+    @InjectRepository(Category) private readonly catRepo: Repository<Category>,
   ) {}
 
   /**
@@ -104,11 +106,13 @@ export class ReportsService {
   /**
    * Kategori toplamları (INCOME/EXPENSE), tarih filtresi ile.
    * Transfer kategorisiz sayıldığı için dahil etmiyoruz.
+   * İşlem olmasa bile sistem kategorilerini göster.
    */
   async getCategoryTotals(ownerId: string, kind: 'INCOME' | 'EXPENSE', from?: string, to?: string) {
+    // Önce işlem bazlı kategori toplamlarını al
     const qb = this.txRepo.createQueryBuilder('t')
       .leftJoin('t.category', 'c')
-      .select(['c.id AS category_id', 'c.name AS category_name'])
+      .select(['c.id AS category_id', 'c.name AS category_name', 'c.color AS category_color'])
       .addSelect(`
         SUM(CAST(t.amount AS NUMERIC))
       `, 'total')
@@ -121,13 +125,32 @@ export class ReportsService {
     qb.andWhere('c.id IS NOT NULL')
       .groupBy('c.id')
       .addGroupBy('c.name')
+      .addGroupBy('c.color')
       .orderBy('total', 'DESC');
 
-    const rows = await qb.getRawMany<{ category_id: string; category_name: string; total: string }>();
-    return rows.map(r => ({
-      categoryId: r.category_id,
-      name: r.category_name,
-      total: r.total,
+    const rows = await qb.getRawMany<{ category_id: string; category_name: string; category_color: string; total: string }>();
+    
+    // Eğer işlem varsa, sadece onları döndür
+    if (rows.length > 0) {
+      return rows.map(r => ({
+        categoryId: r.category_id,
+        name: r.category_name,
+        color: r.category_color,
+        total: r.total,
+      }));
+    }
+    
+    // İşlem yoksa, sistem kategorilerini göster (0 toplamla)
+    const systemCategories = await this.catRepo.find({
+      where: { isSystem: true, kind },
+      order: { priority: 'DESC' }
+    });
+    
+    return systemCategories.map(cat => ({
+      categoryId: cat.id,
+      name: cat.name,
+      color: cat.color,
+      total: '0', // İşlem yok, toplam 0
     }));
   }
 

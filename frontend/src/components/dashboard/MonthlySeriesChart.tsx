@@ -27,10 +27,20 @@ type BarData = {
   expense: number;
 };
 
+type Tooltip = {
+  x: number;
+  y: number;
+  label: string;
+  percentage: number;
+  value: number;
+  color: string;
+} | null;
+
 export default function MonthlySeriesChart({ incomeCategories, expenseCategories }: Props) {
   const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
   const [monthlyData, setMonthlyData] = useState<BarData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tooltip, setTooltip] = useState<Tooltip>(null);
 
   // Gerçek aylık verileri al
   useEffect(() => {
@@ -120,7 +130,8 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
     incomeCategories.forEach((cat, index) => {
       const percentage = total === 0 ? 100 : (Number(cat.total) / total) * 100;
       const angle = (percentage / 100) * 360;
-      const color = `hsl(${120 + index * 30}, 70%, 50%)`;
+      // Kategorinin kendi rengini kullan, yoksa fallback renk
+      const color = cat.color || `hsl(${120 + index * 30}, 70%, 50%)`;
       
       slices.push({
         id: `income-${cat.name}`,
@@ -164,7 +175,8 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
     expenseCategories.forEach((cat, index) => {
       const percentage = (Number(cat.total) / total) * 100;
       const angle = (percentage / 100) * 360;
-      const color = `hsl(${0 + index * 30}, 70%, 50%)`;
+      // Kategorinin kendi rengini kullan, yoksa fallback renk
+      const color = cat.color || `hsl(${0 + index * 30}, 70%, 50%)`;
       
       slices.push({
         id: `expense-${cat.name}`,
@@ -220,11 +232,35 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
     const centerY = size / 2;
     const radius = (size / 2) - 10;
 
+    // Mouse enter handler
+    const handleMouseEnter = (slice: PieSlice, event: React.MouseEvent<SVGPathElement>) => {
+      onSliceHover(slice.id);
+      setTooltip({
+        x: event.clientX + 10,
+        y: event.clientY - 10,
+        label: slice.label,
+        percentage: slice.percentage,
+        value: slice.value,
+        color: slice.color
+      });
+    };
+
+    // Mouse leave handler
+    const handleMouseLeave = () => {
+      onSliceHover(null);
+      setTooltip(null);
+    };
+
     return (
       <div className="flex flex-col items-center">
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{title}</h4>
         <div className="relative">
-          <svg width={size} height={size} className="transform transition-transform duration-200">
+          <svg 
+            width={size} 
+            height={size} 
+            className="transform transition-transform duration-200"
+            onMouseLeave={handleMouseLeave}
+          >
             {data.map((slice) => (
               <path
                 key={slice.id}
@@ -238,11 +274,12 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                   transformOrigin: 'center',
                   filter: slice.isHovered ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'none'
                 }}
-                onMouseEnter={() => onSliceHover(slice.id)}
-                onMouseLeave={() => onSliceHover(null)}
+                onMouseEnter={(e) => handleMouseEnter(slice, e)}
+                onMouseLeave={handleMouseLeave}
               />
             ))}
           </svg>
+          
           {data.length === 0 && (
             <div className="absolute inset-0 flex items-center justify-center text-gray-400 text-xs">
               Veri yok
@@ -450,6 +487,31 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
           </div>
         </div>
       </div>
+
+      {/* Tooltip */}
+      {tooltip && (
+        <div
+          className="fixed z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg px-3 py-2 text-sm pointer-events-none"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            transform: 'translateY(-50%)'
+          }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <div 
+              className="w-3 h-3 rounded-full" 
+              style={{ backgroundColor: tooltip.color }}
+            />
+            <span className="font-medium text-gray-900 dark:text-gray-100">
+              {tooltip.label}
+            </span>
+          </div>
+          <div className="text-gray-600 dark:text-gray-400">
+            {tooltip.percentage.toFixed(1)}% • {fmtMoney(tooltip.value, 'TRY')}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">

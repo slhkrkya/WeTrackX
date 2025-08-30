@@ -1,26 +1,26 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { CategoriesAPI } from '@/lib/categories';
 import { type CategoryKind, CATEGORY_KIND_LABELS_TR } from '@/lib/types';
+import { useToast } from '@/components/ToastProvider';
 
 const KINDS: CategoryKind[] = ['INCOME', 'EXPENSE'];
 
-// Basit hex doğrulama (#RGB veya #RRGGBB)
-function isValidHexColor(s: string) {
-  return /^#([0-9A-F]{3}|[0-9A-F]{6})$/i.test(s.trim());
+function isValidHexColor(color: string): boolean {
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
 }
 
-// Tür bazlı makul varsayılan hex (global tokenlara yakın tonlar)
 function defaultHexForKind(k: CategoryKind) {
-  return k === 'INCOME' ? '#16A34A' /* success-600 */ : '#DC2626' /* error-600 */;
+  return k === 'INCOME' ? '#22C55E' : '#EF4444';
 }
 
 export default function NewCategoryClient() {
   const router = useRouter();
   const sp = useSearchParams();
+  const { show } = useToast();
   const initialKind = (sp.get('kind') as CategoryKind) || 'EXPENSE';
 
   const [name, setName] = useState('');
@@ -96,9 +96,12 @@ export default function NewCategoryClient() {
         priority,
       };
       await CategoriesAPI.create(payload);
+      show('Kategori başarıyla oluşturuldu!', 'success');
       router.replace(`/categories?kind=${kind}`);
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : String(e));
+      const errorMessage = e instanceof Error ? e.message : String(e);
+      setErr(errorMessage);
+      show(errorMessage, 'error');
       setLoading(false);
     }
   }

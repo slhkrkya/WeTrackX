@@ -2,7 +2,7 @@ import { api } from './api';
 
 export type BalanceItem = { accountId: string; name: string; currency: string; balance: string };
 export type Cashflow = { income: string; expense: string; net: string };
-export type CategoryTotal = { categoryId: string; name: string; total: string };
+export type CategoryTotal = { categoryId: string; name: string; color?: string; total: string };
 export type MonthlyPoint = { month: string; income: string; expense: string };
 
 export type TxItem = {

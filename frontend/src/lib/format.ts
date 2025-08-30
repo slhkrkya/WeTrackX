@@ -7,3 +7,9 @@ export function fmtDate(iso: string, locale = 'tr-TR') {
   const d = new Date(iso);
   return d.toLocaleDateString(locale, { year: 'numeric', month: '2-digit', day: '2-digit' });
 }
+
+export function parseAmountRaw(v: string): number {
+  // Virgülü noktaya çevir, boşlukları kırp
+  const n = Number(String(v).replace(',', '.').trim());
+  return Number.isFinite(n) ? Math.abs(n) : NaN; // her zaman pozitif
+}

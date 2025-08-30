@@ -156,8 +156,19 @@ export default function CategoriesClient() {
           </div>
 
           {items.length === 0 ? (
-            <div className="px-4 py-3 text-sm label-soft">
-              Henüz kategori yok. Sağ üstten <span className="font-medium">“Yeni Kategori”</span> oluşturabilirsin.
+            <div className="px-4 py-8 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Henüz Kategori Yok</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
+                {kind === 'INCOME' ? 'Gelir' : 'Gider'} kategorilerinizi oluşturarak işlemlerinizi daha iyi organize edebilirsiniz.
+              </p>
+              <Link href={`/categories/new?kind=${kind}`} className="btn btn-primary">
+                Kategori Oluştur
+              </Link>
             </div>
           ) : (
             <ul className="divide-y" role="rowgroup">
