@@ -32,21 +32,24 @@ const KIND_LABELS_TR: Record<Kind, string> = {
   TRANSFER: 'Transfer',
 };
 
-const typeStyles: Record<Kind, { text: string; bg: string; border: string }> = {
+const typeStyles: Record<Kind, { text: string; bg: string; border: string; icon: string }> = {
   INCOME:   { 
     text: 'text-green-600 dark:text-green-400',
     bg: 'bg-green-50 dark:bg-green-900/20',
-    border: 'border-green-200 dark:border-green-800'
+    border: 'border-green-200 dark:border-green-800',
+    icon: 'bg-green-500'
   },
   EXPENSE:  { 
     text: 'text-red-600 dark:text-red-400',
     bg: 'bg-red-50 dark:bg-red-900/20',
-    border: 'border-red-200 dark:border-red-800'
+    border: 'border-red-200 dark:border-red-800',
+    icon: 'bg-red-500'
   },
   TRANSFER: { 
     text: 'text-blue-600 dark:text-blue-400',
     bg: 'bg-blue-50 dark:bg-blue-900/20',
-    border: 'border-blue-200 dark:border-blue-800'
+    border: 'border-blue-200 dark:border-blue-800',
+    icon: 'bg-blue-500'
   },
 };
 
@@ -59,7 +62,7 @@ function TypePill({ type }: { type: Kind }) {
   return (
     <span
       className={[
-        'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border',
+        'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border',
         style.bg,
         style.text,
         style.border,
@@ -85,24 +88,26 @@ function SegmentedType({
   ];
   return (
     <div
-      className="inline-flex items-center rounded-lg ring-1 ring-muted-300 bg-card p-0.5"
+      className="inline-flex items-center rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 bg-white dark:bg-gray-800 p-1 shadow-sm"
       role="tablist"
       aria-label="İşlem türü filtresi"
     >
       {tabs.map((t) => {
         const active = value === t.key;
         const color =
-          t.key === 'INCOME' ? 'money-in' : t.key === 'EXPENSE' ? 'money-out' : 'text-foreground';
+          t.key === 'INCOME' ? 'text-green-600 dark:text-green-400' : 
+          t.key === 'EXPENSE' ? 'text-red-600 dark:text-red-400' : 
+          'text-gray-600 dark:text-gray-400';
         return (
           <button
             key={t.key || 'ALL'}
             role="tab"
             aria-selected={active}
             className={[
-              'px-3 h-9 rounded-md text-sm transition-colors',
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
               active
-                ? 'bg-elevated ring-1 ring-muted-300'
-                : 'hover:bg-elevated/80',
+                ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
               color,
             ].join(' ')}
             onClick={() => onChange(t.key)}
@@ -117,16 +122,16 @@ function SegmentedType({
 
 function FiltersSkeleton() {
   return (
-    <div className="reveal card grid lg:grid-cols-6 gap-3 p-4">
+    <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 grid lg:grid-cols-6 gap-4 p-6">
       {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="space-y-1">
-          <div className="h-3 w-16 rounded bg-elevated animate-pulse" />
-          <div className="h-10 w-full rounded bg-elevated animate-pulse" />
+        <div key={i} className="space-y-2">
+          <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+          <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
         </div>
       ))}
-      <div className="lg:col-span-6 flex gap-2">
-        <div className="h-10 w-28 rounded bg-elevated animate-pulse" />
-        <div className="h-10 w-28 rounded bg-elevated animate-pulse" />
+      <div className="lg:col-span-6 flex gap-3">
+        <div className="h-10 w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+        <div className="h-10 w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
       </div>
     </div>
   );
@@ -134,15 +139,15 @@ function FiltersSkeleton() {
 
 function ListSkeleton() {
   return (
-    <div className="reveal card overflow-hidden">
-      <div className="hidden md:grid grid-cols-7 gap-2 px-4 py-2 text-[11px] subtext">
+    <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="hidden md:grid grid-cols-7 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
         <div>Tarih</div><div>Tür</div><div>Başlık</div><div>Hesap / Karşı Hesap</div><div>Kategori</div><div className="text-right">Tutar</div><div className="text-right">İşlemler</div>
       </div>
-      <ul className="divide-y">
+      <ul className="divide-y divide-gray-100 dark:divide-gray-700">
         {Array.from({ length: 8 }).map((_, i) => (
-          <li key={i} className="grid md:grid-cols-7 grid-cols-2 gap-2 px-4 py-3">
+          <li key={i} className="grid md:grid-cols-7 grid-cols-2 gap-4 px-6 py-4">
             {Array.from({ length: 7 }).map((__, k) => (
-              <div key={k} className="h-4 rounded bg-elevated animate-pulse md:block" />
+              <div key={k} className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse md:block" />
             ))}
           </li>
         ))}
@@ -366,11 +371,11 @@ export default function TransactionsClient() {
 
   if (loading) {
     return (
-      <main className="min-h-dvh p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
         {/* Başlık + Yeni İşlem */}
         <div className="reveal flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="h-7 w-40 rounded bg-elevated animate-pulse" />
-          <div className="h-10 w-full sm:w-28 rounded bg-elevated animate-pulse" />
+          <div className="h-7 w-40 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+          <div className="h-10 w-full sm:w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
         </div>
         <FiltersSkeleton />
         <ListSkeleton />
@@ -379,34 +384,52 @@ export default function TransactionsClient() {
   }
 
   return (
-    <main className="min-h-dvh p-6 space-y-6">
+    <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Başlık */}
       <div className="reveal flex items-center justify-between gap-3">
-        <h1 className="h1">İşlemler</h1>
-        <Link href="/transactions/new" className="btn btn-primary">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            İşlemler
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Finansal işlemlerinizi görüntüleyin ve yönetin
+          </p>
+        </div>
+        <Link 
+          href="/transactions/new" 
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           Yeni İşlem
         </Link>
       </div>
 
       {/* Hata */}
       {err && (
-        <div className="reveal card ring-1 ring-negative-500/25" role="alert">
-          <p className="text-sm text-negative-500">{err}</p>
+        <div className="reveal bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4" role="alert">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-red-600 dark:text-red-400">{err}</p>
+          </div>
         </div>
       )}
 
       {/* Filtreler */}
-      <form onSubmit={applyFilters} className="reveal card grid lg:grid-cols-6 gap-3 p-4">
+      <form onSubmit={applyFilters} className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 grid lg:grid-cols-6 gap-4 p-6">
         {/* Segmented tür seçimi */}
         <div className="lg:col-span-6 flex items-center gap-3">
-          <label className="subtext text-sm">Tür</label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tür</label>
           <SegmentedType value={formType} onChange={setFormType} />
         </div>
 
-        <div className="space-y-1">
-          <label className="subtext">Hesap</label>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hesap</label>
           <select
-            className="input bg-transparent"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             value={formAccountId}
             onChange={(e) => setFormAccountId(e.target.value)}
           >
@@ -417,10 +440,10 @@ export default function TransactionsClient() {
           </select>
         </div>
 
-        <div className="space-y-1">
-          <label className="subtext">Kategori</label>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
           <select
-            className="input bg-transparent"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 disabled:opacity-50"
             value={formCategoryId}
             onChange={(e) => setFormCategoryId(e.target.value)}
             disabled={formType === '' || formType === 'TRANSFER'}
@@ -432,51 +455,68 @@ export default function TransactionsClient() {
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
-          <p className="text-xs subtext">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             {formType === 'TRANSFER' || formType === '' ? 'Kategori yalnızca INCOME/EXPENSE için' : '\u00A0'}
           </p>
         </div>
 
-        <div className="space-y-1">
-          <label className="subtext">Başlangıç</label>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Başlangıç</label>
           <input
-            className="input"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             type="date"
             value={formFrom}
             onChange={(e) => setFormFrom(e.target.value)}
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="subtext">Bitiş</label>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bitiş</label>
           <input
-            className="input"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             type="date"
             value={formTo}
             onChange={(e) => setFormTo(e.target.value)}
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="subtext">Ara</label>
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ara</label>
           <input
-            className="input"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             placeholder="başlık / açıklama"
             value={formQ}
             onChange={(e) => setFormQ(e.target.value)}
           />
         </div>
 
-        <div className="lg:col-span-6 flex gap-2">
-          <button className="btn btn-primary" type="submit">Uygula</button>
-          <button type="button" onClick={clearFilters} className="btn btn-ghost">Temizle</button>
+        <div className="lg:col-span-6 flex gap-3">
+          <button 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5" 
+            type="submit"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            Uygula
+          </button>
+          <button 
+            type="button" 
+            onClick={clearFilters} 
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-xl transition-all duration-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            Temizle
+          </button>
         </div>
       </form>
 
       {/* Liste */}
-      <div className="reveal card overflow-hidden" role="table" aria-label="İşlem listesi">
+      <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden" role="table" aria-label="İşlem listesi">
         {/* Başlık: md+ */}
-        <div className="hidden md:grid grid-cols-7 gap-2 px-4 py-2 text-[11px] subtext" role="rowgroup">
+        <div className="hidden md:grid grid-cols-7 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50" role="rowgroup">
           <div role="columnheader">Tarih</div>
           <div role="columnheader">Tür</div>
           <div role="columnheader">Başlık</div>
@@ -487,7 +527,7 @@ export default function TransactionsClient() {
         </div>
 
         {items.length === 0 ? (
-          <div className="px-4 py-8 text-center">
+          <div className="px-6 py-12 text-center">
             {/* Silinmiş hesaplar bilgisi */}
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6 max-w-md mx-auto">
               <div className="flex items-start space-x-3">
@@ -503,44 +543,51 @@ export default function TransactionsClient() {
               </div>
             </div>
             
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold mb-2">Henüz İşlem Yok</h3>
-            <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
+            <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Henüz İşlem Yok</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
               {q || accountId || categoryId || from || to 
                 ? 'Arama kriterlerinize uygun işlem bulunamadı. Filtreleri değiştirmeyi deneyin.'
                 : 'İlk işleminizi oluşturarak finansal takibinize başlayabilirsiniz.'
               }
             </p>
             {!q && !accountId && !categoryId && !from && !to && (
-              <Link href="/transactions/new" className="btn btn-primary">
+              <Link 
+                href="/transactions/new" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
                 İlk İşlemi Oluştur
               </Link>
             )}
           </div>
         ) : (
-          <ul className="divide-y" role="rowgroup">
+          <ul className="divide-y divide-gray-100 dark:divide-gray-700" role="rowgroup">
             {items.map((t) => {
               const income = t.type === 'INCOME';
               const expense = t.type === 'EXPENSE';
               const amt = Number(t.amount);
               const safeAmt = Number.isFinite(amt) ? Math.abs(amt) : 0;
+              const style = typeStyles[t.type] ?? typeStyles.INCOME;
 
               return (
                 <li
                   key={t.id}
                   role="row"
                   className={[
-                    'grid md:grid-cols-7 grid-cols-2 gap-2 px-4 py-2 text-sm',
-                    'hover:bg-[rgb(var(--surface-1))]/60 transition-colors',
-                    'focus-within:bg-[rgb(var(--surface-1))]/60',
+                    'grid md:grid-cols-7 grid-cols-2 gap-4 px-6 py-4 text-sm',
+                    'hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200',
+                    'focus-within:bg-gray-50 dark:focus-within:bg-gray-700/50',
                   ].join(' ')}
                 >
                   {/* Tarih */}
-                  <div role="cell" className="order-1 md:order-none subtext">
+                  <div role="cell" className="order-1 md:order-none text-gray-600 dark:text-gray-400">
                     <time dateTime={t.date}>{fmtDate(t.date)}</time>
                   </div>
 
@@ -551,25 +598,44 @@ export default function TransactionsClient() {
 
                   {/* Başlık + açıklama */}
                   <div role="cell" className="order-2 md:order-none">
-                    <span className="truncate block">{t.title}</span>
-                    {t.description ? (
-                      <span className="subtext text-xs truncate block">{t.description}</span>
-                    ) : null}
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full ${style.icon} flex items-center justify-center flex-shrink-0`}>
+                        {t.type === 'INCOME' ? (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                          </svg>
+                        ) : t.type === 'EXPENSE' ? (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                          </svg>
+                        )}
+                      </div>
+                      <div>
+                        <span className="font-medium text-gray-900 dark:text-white block">{t.title}</span>
+                        {t.description ? (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 block">{t.description}</span>
+                        ) : null}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Hesap / Karşı Hesap */}
                   <div role="cell" className="order-4 md:order-none">
                     {t.type === 'TRANSFER' ? (
-                      <span className="truncate block">
+                      <span className="text-gray-700 dark:text-gray-300 block">
                         {t.fromAccount?.name} → {t.toAccount?.name}
                       </span>
                     ) : (
-                      <span className="truncate block">{t.account?.name || '-'}</span>
+                      <span className="text-gray-700 dark:text-gray-300 block">{t.account?.name || '-'}</span>
                     )}
                   </div>
 
                   {/* Kategori */}
-                  <div role="cell" className="truncate order-5 md:order-none">
+                  <div role="cell" className="truncate order-5 md:order-none text-gray-600 dark:text-gray-400">
                     {t.category?.name || (t.type === 'TRANSFER' ? '—' : '-')}
                   </div>
 
@@ -577,20 +643,21 @@ export default function TransactionsClient() {
                   <div
                     role="cell"
                     className={[
-                      'tabular-nums text-right order-6 md:order-none',
-                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--ring))] focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--card))]',
+                      'tabular-nums text-right order-6 md:order-none font-semibold',
                     ].join(' ')}
                   >
                     {income ? (
-                      <span className="money-in">
+                      <span className="text-green-600 dark:text-green-400">
                         + {fmtMoney(safeAmt, t.currency)}
                       </span>
                     ) : expense ? (
-                      <span className="money-out">
+                      <span className="text-red-600 dark:text-red-400">
                         - {fmtMoney(safeAmt, t.currency)}
                       </span>
                     ) : (
-                      fmtMoney(safeAmt, t.currency)
+                      <span className="text-blue-600 dark:text-blue-400">
+                        {fmtMoney(safeAmt, t.currency)}
+                      </span>
                     )}
                   </div>
 
@@ -598,7 +665,7 @@ export default function TransactionsClient() {
                   <div role="cell" className="flex items-center justify-end gap-2 order-7 md:order-none">
                     <Link
                       href={`/transactions/${t.id}/edit`}
-                      className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 rounded-lg"
                       title="Düzenle"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -608,7 +675,7 @@ export default function TransactionsClient() {
                     <button
                       onClick={() => deleteTransaction(t.id)}
                       disabled={deletingId === t.id}
-                      className="p-1 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                      className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 disabled:opacity-50 rounded-lg"
                       title="Sil"
                     >
                       {deletingId === t.id ? (
@@ -631,11 +698,11 @@ export default function TransactionsClient() {
 
       {/* Sayfalama */}
       <div className="reveal flex items-center justify-between gap-3">
-        <div className="subtext text-sm">Toplam: {total.toLocaleString()} kayıt</div>
-        <div className="flex items-center gap-2">
+        <div className="text-sm text-gray-600 dark:text-gray-400">Toplam: {total.toLocaleString()} kayıt</div>
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            className="btn btn-ghost"
+            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-all duration-200 disabled:opacity-50"
             disabled={page <= 1}
             onClick={() => {
               const next = Math.max(1, page - 1);
@@ -643,12 +710,15 @@ export default function TransactionsClient() {
               updateUrlParams({ page: next });
             }}
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
             Önceki
           </button>
-          <span className="subtext text-sm">Sayfa {page}</span>
+          <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Sayfa {page}</span>
           <button
             type="button"
-            className="btn btn-ghost"
+            className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-lg transition-all duration-200 disabled:opacity-50"
             disabled={page * pageSize >= total}
             onClick={() => {
               const next = page + 1;
@@ -657,9 +727,12 @@ export default function TransactionsClient() {
             }}
           >
             Sonraki
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
           </button>
           <select
-            className="input bg-transparent w-[6.5rem]"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 w-32"
             value={pageSize}
             onChange={(e) => {
               const size = Number(e.target.value) || 20;

@@ -93,14 +93,14 @@ export default function CategoryEditClient({ id }: Props) {
 
   if (loading) {
     return (
-      <main className="min-h-dvh p-6 space-y-6">
+      <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
         <div className="reveal">
-          <div className="h-8 w-48 rounded bg-elevated animate-pulse mb-6" />
-          <div className="card space-y-4">
+          <div className="h-8 w-48 rounded bg-gray-200 dark:bg-gray-600 animate-pulse mb-6" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 space-y-4 p-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="space-y-2">
-                <div className="h-4 w-24 rounded bg-elevated animate-pulse" />
-                <div className="h-10 w-full rounded bg-elevated animate-pulse" />
+                <div className="h-4 w-24 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+                <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
               </div>
             ))}
           </div>
@@ -111,9 +111,14 @@ export default function CategoryEditClient({ id }: Props) {
 
   if (err) {
     return (
-      <main className="min-h-dvh p-6 space-y-6">
-        <div className="reveal card ring-1 ring-negative-500/25" role="alert">
-          <p className="text-sm text-negative-500">{err}</p>
+      <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="reveal bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4" role="alert">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-red-600 dark:text-red-400">{err}</p>
+          </div>
         </div>
       </main>
     );
@@ -121,16 +126,24 @@ export default function CategoryEditClient({ id }: Props) {
 
   if (!category) {
     return (
-      <main className="min-h-dvh p-6 space-y-6">
-        <div className="reveal card text-center py-12">
-          <h3 className="text-lg font-semibold mb-2">Kategori Bulunamadı</h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-4">
+      <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 text-center py-12">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
+            <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Kategori Bulunamadı</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
             Aradığınız kategori bulunamadı veya silinmiş olabilir.
           </p>
           <button
             onClick={() => router.push('/categories')}
-            className="btn btn-primary"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
             Kategorilere Dön
           </button>
         </div>
@@ -139,52 +152,62 @@ export default function CategoryEditClient({ id }: Props) {
   }
 
   return (
-    <main className="min-h-dvh p-6 space-y-6">
+    <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Başlık */}
       <div className="reveal flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Kategori Düzenle</h1>
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Kategori Düzenle
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Kategori bilgilerini güncelleyin
+          </p>
+        </div>
         <button
           onClick={() => router.push('/categories')}
-          className="btn btn-ghost h-9"
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-xl transition-all duration-200"
         >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
           İptal
         </button>
       </div>
 
       {/* Mevcut Kategori Bilgileri */}
-      <div className="reveal card p-4 space-y-3">
-        <h3 className="font-semibold text-sm">Mevcut Kategori</h3>
+      <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6 space-y-4">
+        <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Mevcut Kategori</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
           <div>
-            <span className="label-soft">Ad:</span>
-            <p className="font-medium">{category.name}</p>
+            <span className="text-gray-500 dark:text-gray-400">Ad:</span>
+            <p className="font-medium text-gray-900 dark:text-white">{category.name}</p>
           </div>
           <div>
-            <span className="label-soft">Tür:</span>
-            <p className="font-medium">{CATEGORY_KIND_LABELS_TR[category.kind]}</p>
+            <span className="text-gray-500 dark:text-gray-400">Tür:</span>
+            <p className="font-medium text-gray-900 dark:text-white">{CATEGORY_KIND_LABELS_TR[category.kind]}</p>
           </div>
           <div>
-            <span className="label-soft">Renk:</span>
+            <span className="text-gray-500 dark:text-gray-400">Renk:</span>
             <div className="flex items-center gap-2">
               {category.color && (
                 <span
-                  className="inline-block h-4 w-4 rounded-full border border-black/10"
+                  className="inline-block h-4 w-4 rounded-full border-2 border-gray-200 dark:border-gray-600 shadow-sm"
                   style={{ background: category.color }}
                 />
               )}
-              <span className="font-medium">{category.color || '—'}</span>
+              <span className="font-medium text-gray-900 dark:text-white">{category.color || '—'}</span>
             </div>
           </div>
           <div>
-            <span className="label-soft">Öncelik:</span>
-            <p className="font-medium">{category.priority}</p>
+            <span className="text-gray-500 dark:text-gray-400">Öncelik:</span>
+            <p className="font-medium text-gray-900 dark:text-white">{category.priority}</p>
           </div>
         </div>
       </div>
 
       {/* Sistem Kategorisi Uyarısı */}
       {category.isSystem && (
-        <div className="reveal card bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4">
+        <div className="reveal bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0">
               <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,25 +228,25 @@ export default function CategoryEditClient({ id }: Props) {
       )}
 
       {/* Düzenleme Formu - Tüm kategoriler için */}
-      <form onSubmit={handleSubmit} className="reveal card space-y-4">
-        <h3 className="font-semibold text-sm">Düzenleme</h3>
+      <form onSubmit={handleSubmit} className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 space-y-4 p-6">
+        <h3 className="font-semibold text-sm text-gray-900 dark:text-white">Düzenleme</h3>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="subtext">Kategori Adı</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kategori Adı</label>
             <input
               type="text"
-              className="input"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
               required
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="subtext">Tür</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tür</label>
             <select
-              className={`input ${category.isSystem ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${category.isSystem ? 'opacity-50 cursor-not-allowed' : ''}`}
               value={formData.kind}
               onChange={(e) => !category.isSystem && setFormData(prev => ({ ...prev, kind: e.target.value as CategoryKind }))}
               required
@@ -239,21 +262,21 @@ export default function CategoryEditClient({ id }: Props) {
             )}
           </div>
 
-          <div className="space-y-1">
-            <label className="subtext">Renk</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Renk</label>
             <input
               type="color"
-              className="input h-12 w-full"
+              className="w-full h-12 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={formData.color}
               onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="subtext">Öncelik</label>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Öncelik</label>
             <input
               type="number"
-              className="input"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={formData.priority}
               onChange={(e) => setFormData(prev => ({ ...prev, priority: Number(e.target.value) }))}
               min="0"
@@ -262,19 +285,36 @@ export default function CategoryEditClient({ id }: Props) {
           </div>
         </div>
 
-        <div className="flex gap-2 pt-4">
+        <div className="flex gap-3 pt-4">
           <button
             type="submit"
             disabled={saving}
-            className="btn btn-primary"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none"
           >
-            {saving ? 'Güncelleniyor...' : 'Güncelle'}
+            {saving ? (
+              <>
+                <svg className="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Güncelleniyor...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Güncelle
+              </>
+            )}
           </button>
           <button
             type="button"
             onClick={() => router.push('/categories')}
-            className="btn btn-ghost"
+            className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-xl transition-all duration-200"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
             İptal
           </button>
         </div>

@@ -10,9 +10,57 @@ import { useToast } from '@/components/ToastProvider';
 type RegisterRes = { user: AuthUser; token: string };
 
 function getErrorMessage(e: unknown) {
-  if (e instanceof Error) return e.message;
+  if (e instanceof Error) {
+    // JSON formatındaki hata mesajlarını parse et
+    try {
+      const errorData = JSON.parse(e.message);
+      if (errorData.message) {
+        return errorData.message;
+      }
+      if (errorData.error === 'Conflict') {
+        return 'Bu e-posta adresi zaten kullanılıyor';
+      }
+      if (errorData.error === 'Bad Request') {
+        return 'Geçersiz bilgi gönderildi';
+      }
+      if (errorData.statusCode === 409) {
+        return 'Bu e-posta adresi zaten kullanılıyor';
+      }
+      if (errorData.statusCode === 400) {
+        return 'Geçersiz bilgi gönderildi';
+      }
+      if (errorData.statusCode === 500) {
+        return 'Sunucu hatası oluştu, lütfen tekrar deneyin';
+      }
+      return errorData.message || 'Bir hata oluştu';
+    } catch {
+      // JSON parse edilemezse orijinal mesajı kullan
+      return e.message;
+    }
+  }
+  
   try {
-    return JSON.stringify(e);
+    const errorStr = JSON.stringify(e);
+    const errorData = JSON.parse(errorStr);
+    if (errorData.message) {
+      return errorData.message;
+    }
+    if (errorData.error === 'Conflict') {
+      return 'Bu e-posta adresi zaten kullanılıyor';
+    }
+    if (errorData.error === 'Bad Request') {
+      return 'Geçersiz bilgi gönderildi';
+    }
+    if (errorData.statusCode === 409) {
+      return 'Bu e-posta adresi zaten kullanılıyor';
+    }
+    if (errorData.statusCode === 400) {
+      return 'Geçersiz bilgi gönderildi';
+    }
+    if (errorData.statusCode === 500) {
+      return 'Sunucu hatası oluştu, lütfen tekrar deneyin';
+    }
+    return errorData.message || 'Bir hata oluştu';
   } catch {
     return String(e);
   }
@@ -127,23 +175,25 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="min-h-dvh flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
+    <main className="min-h-dvh flex items-center justify-center p-4 md:p-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       <div className="w-full max-w-md">
         {/* Logo ve Başlık */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-            </svg>
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">WeTrackX</h1>
+          <Link href="/" className="inline-block">
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 cursor-pointer">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+          </Link>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">WeTrackX</h1>
           <p className="text-gray-600 dark:text-gray-400">Hesabınızı oluşturun</p>
         </div>
 
-        <form onSubmit={onSubmit} className="reveal space-y-6 card shadow-xl border-0" aria-busy={loading}>
+        <form onSubmit={onSubmit} className="reveal space-y-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6 md:p-8" aria-busy={loading}>
           {err && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg" role="alert" aria-live="polite">
-              <div className="flex items-center gap-2">
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4" role="alert" aria-live="polite">
+              <div className="flex items-center gap-3">
                 <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -159,7 +209,7 @@ export default function RegisterPage() {
             </label>
             <input
               id="name"
-              className={`input ${nameErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              className={`w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${nameErr ? 'border-red-500 focus:ring-red-500' : ''}`}
               type="text"
               value={name}
               onChange={(ev) => setName(ev.target.value)}
@@ -192,7 +242,7 @@ export default function RegisterPage() {
             </label>
             <input
               id="email"
-              className={`input ${emailErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+              className={`w-full px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${emailErr ? 'border-red-500 focus:ring-red-500' : ''}`}
               type="email"
               value={email}
               onChange={(ev) => setEmail(ev.target.value)}
@@ -226,7 +276,7 @@ export default function RegisterPage() {
             <div className="relative">
               <input
                 id="password"
-                className={`input pr-10 ${passwordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${passwordErr ? 'border-red-500 focus:ring-red-500' : ''}`}
                 type={showPw ? 'text' : 'password'}
                 value={password}
                 onChange={(ev) => setPassword(ev.target.value)}
@@ -246,7 +296,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPw((v) => !v)}
-                className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-md"
+                className="absolute inset-y-0 right-0 px-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-xl transition-colors duration-200"
                 aria-label={showPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
                 tabIndex={-1}
               >
@@ -280,7 +330,7 @@ export default function RegisterPage() {
             <div className="relative">
               <input
                 id="confirmPassword"
-                className={`input pr-10 ${confirmPasswordErr ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
+                className={`w-full px-4 py-3 pr-12 border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 ${confirmPasswordErr ? 'border-red-500 focus:ring-red-500' : ''}`}
                 type={showConfirmPw ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(ev) => setConfirmPassword(ev.target.value)}
@@ -294,7 +344,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowConfirmPw((v) => !v)}
-                className="absolute inset-y-0 right-0 px-3 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-md"
+                className="absolute inset-y-0 right-0 px-4 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-r-xl transition-colors duration-200"
                 aria-label={showConfirmPw ? 'Şifreyi gizle' : 'Şifreyi göster'}
                 tabIndex={-1}
               >
@@ -330,11 +380,11 @@ export default function RegisterPage() {
 
           <button 
             disabled={loading} 
-            className="btn btn-primary w-full h-12 text-base font-medium" 
+            className="w-full px-6 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none" 
             type="submit"
           >
             {loading ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center gap-2">
                 <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>

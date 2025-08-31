@@ -188,21 +188,21 @@ export default function NewTransactionClient() {
 
   if (loading) {
     return (
-      <main className="min-h-dvh p-6 flex justify-center">
-        <div className="reveal w-full max-w-2xl space-y-5 card p-4">
+      <main className="min-h-dvh p-4 md:p-6 flex justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+        <div className="reveal w-full max-w-2xl space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
-            <div className="h-7 w-40 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-            <div className="h-6 w-24 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+            <div className="h-7 w-40 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+            <div className="h-6 w-24 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
           </div>
           {Array.from({ length: 7 }).map((_, i) => (
             <div key={i} className="space-y-2">
-              <div className="h-3 w-20 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-              <div className="h-10 w-full rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+              <div className="h-3 w-20 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+              <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
             </div>
           ))}
-          <div className="flex gap-2">
-            <div className="h-10 w-24 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-            <div className="h-10 w-20 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+          <div className="flex gap-3">
+            <div className="h-10 w-24 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+            <div className="h-10 w-20 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
           </div>
         </div>
       </main>
@@ -210,38 +210,61 @@ export default function NewTransactionClient() {
   }
 
   return (
-    <main className="min-h-dvh p-6 flex justify-center">
-      <form onSubmit={onSubmit} className="reveal w-full max-w-2xl space-y-5 card">
+    <main className="min-h-dvh p-4 md:p-6 flex justify-center bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+      <form onSubmit={onSubmit} className="reveal w-full max-w-2xl space-y-6 bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 p-6">
         {/* Başlık */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Yeni İşlem</h1>
-          <Link href="/transactions" className="nav-link">Listeye Dön</Link>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Yeni İşlem
+            </h1>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+              Finansal işleminizi oluşturun
+            </p>
+          </div>
+          <Link 
+            href="/transactions" 
+            className="inline-flex items-center gap-2 px-3 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-all duration-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Listeye Dön
+          </Link>
         </div>
 
         {/* Genel hata */}
         {err && (
-          <div className="card ring-1 ring-[rgb(var(--error))]/25" role="alert">
-            <p className="text-sm text-[rgb(var(--error))]">{err}</p>
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4" role="alert">
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm text-red-600 dark:text-red-400">{err}</p>
+            </div>
           </div>
         )}
 
         {/* İşlem türü */}
-        <div className="space-y-1">
-          <label className="label-soft">Tür</label>
-          <div className="inline-flex items-center rounded-lg ring-1 ring-black/10 bg-[rgb(var(--card))] p-0.5">
+        <div className="space-y-3">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tür</label>
+          <div className="inline-flex items-center rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 bg-white dark:bg-gray-800 p-1 shadow-sm">
             {(['INCOME', 'EXPENSE', 'TRANSFER'] as const).map((t) => {
               const active = type === t;
               const color =
-                t === 'INCOME' ? 'text-[rgb(var(--success))]' :
-                t === 'EXPENSE' ? 'text-[rgb(var(--error))]' : 'text-foreground';
+                t === 'INCOME' ? 'text-green-600 dark:text-green-400' :
+                t === 'EXPENSE' ? 'text-red-600 dark:text-red-400' : 
+                'text-blue-600 dark:text-blue-400';
               return (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setType(t)}
                   className={[
-                    'px-3 h-9 rounded-md text-sm transition-colors',
-                    active ? 'bg-[rgb(var(--surface-1))] ring-1 ring-black/5' : 'hover:bg-[rgb(var(--surface-1))]/60',
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                    active 
+                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-blue-600 dark:text-blue-400 shadow-sm'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
                     color,
                   ].join(' ')}
                   aria-pressed={active}
@@ -254,12 +277,12 @@ export default function NewTransactionClient() {
         </div>
 
         {/* Başlık & Açıklama */}
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label htmlFor="title" className="label-soft">Başlık</label>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="title" className="text-sm font-medium text-gray-700 dark:text-gray-300">Başlık</label>
             <input
               id="title"
-              className="input"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               onBlur={() => setTitleErr(title.trim() ? '' : 'Başlık zorunlu')}
@@ -268,13 +291,13 @@ export default function NewTransactionClient() {
               aria-invalid={!!titleErr}
               aria-describedby={titleErr ? 'title-err' : undefined}
             />
-            {titleErr && <p id="title-err" className="text-xs text-[rgb(var(--error))]">{titleErr}</p>}
+            {titleErr && <p id="title-err" className="text-xs text-red-600 dark:text-red-400">{titleErr}</p>}
           </div>
-          <div className="space-y-1">
-            <label htmlFor="desc" className="label-soft">Açıklama (ops.)</label>
+          <div className="space-y-2">
+            <label htmlFor="desc" className="text-sm font-medium text-gray-700 dark:text-gray-300">Açıklama (ops.)</label>
             <input
               id="desc"
-              className="input"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Not"
@@ -283,12 +306,12 @@ export default function NewTransactionClient() {
         </div>
 
         {/* Tutar & Tarih */}
-        <div className="grid sm:grid-cols-2 gap-3">
-          <div className="space-y-1">
-            <label htmlFor="amount" className="label-soft">Tutar</label>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label htmlFor="amount" className="text-sm font-medium text-gray-700 dark:text-gray-300">Tutar</label>
             <input
               id="amount"
-              className="input"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               inputMode="decimal"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
@@ -298,14 +321,14 @@ export default function NewTransactionClient() {
               aria-invalid={!!amountErr}
               aria-describedby={amountErr ? 'amount-err' : undefined}
             />
-            {amountErr && <p id="amount-err" className="text-xs text-[rgb(var(--error))]">{amountErr}</p>}
+            {amountErr && <p id="amount-err" className="text-xs text-red-600 dark:text-red-400">{amountErr}</p>}
           </div>
 
-          <div className="space-y-1">
-            <label htmlFor="date" className="label-soft">Tarih</label>
+          <div className="space-y-2">
+            <label htmlFor="date" className="text-sm font-medium text-gray-700 dark:text-gray-300">Tarih</label>
             <input
               id="date"
-              className="input"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               type="datetime-local"
               value={date}
               onChange={(e) => setDate(e.target.value)}
@@ -314,18 +337,18 @@ export default function NewTransactionClient() {
               aria-invalid={!!dateErr}
               aria-describedby={dateErr ? 'date-err' : undefined}
             />
-            {dateErr && <p id="date-err" className="text-xs text-[rgb(var(--error))]">{dateErr}</p>}
+            {dateErr && <p id="date-err" className="text-xs text-red-600 dark:text-red-400">{dateErr}</p>}
           </div>
         </div>
 
         {/* Tipe göre alanlar */}
         {type === 'TRANSFER' ? (
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label htmlFor="from" className="label-soft">Kaynak Hesap</label>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="from" className="text-sm font-medium text-gray-700 dark:text-gray-300">Kaynak Hesap</label>
               <select
                 id="from"
-                className="input bg-transparent"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 value={fromAccountId}
                 onChange={(e) => setFromAccountId(e.target.value)}
                 required
@@ -339,13 +362,13 @@ export default function NewTransactionClient() {
                   </option>
                 ))}
               </select>
-              {fromErr && <p id="from-err" className="text-xs text-[rgb(var(--error))]">{fromErr}</p>}
+              {fromErr && <p id="from-err" className="text-xs text-red-600 dark:text-red-400">{fromErr}</p>}
             </div>
-            <div className="space-y-1">
-              <label htmlFor="to" className="label-soft">Hedef Hesap</label>
+            <div className="space-y-2">
+              <label htmlFor="to" className="text-sm font-medium text-gray-700 dark:text-gray-300">Hedef Hesap</label>
               <select
                 id="to"
-                className="input bg-transparent"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 value={toAccountId}
                 onChange={(e) => setToAccountId(e.target.value)}
                 required
@@ -359,16 +382,16 @@ export default function NewTransactionClient() {
                   </option>
                 ))}
               </select>
-              {toErr && <p id="to-err" className="text-xs text-[rgb(var(--error))]">{toErr}</p>}
+              {toErr && <p id="to-err" className="text-xs text-red-600 dark:text-red-400">{toErr}</p>}
             </div>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-1">
-              <label htmlFor="acc" className="label-soft">Hesap</label>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="acc" className="text-sm font-medium text-gray-700 dark:text-gray-300">Hesap</label>
               <select
                 id="acc"
-                className="input bg-transparent"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 value={accountId}
                 onChange={(e) => setAccountId(e.target.value)}
                 required
@@ -382,13 +405,13 @@ export default function NewTransactionClient() {
                   </option>
                 ))}
               </select>
-              {accountErr && <p id="acc-err" className="text-xs text-[rgb(var(--error))]">{accountErr}</p>}
+              {accountErr && <p id="acc-err" className="text-xs text-red-600 dark:text-red-400">{accountErr}</p>}
             </div>
-            <div className="space-y-1">
-              <label htmlFor="cat" className="label-soft">Kategori</label>
+            <div className="space-y-2">
+              <label htmlFor="cat" className="text-sm font-medium text-gray-700 dark:text-gray-300">Kategori</label>
               <select
                 id="cat"
-                className="input bg-transparent"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
                 required
@@ -402,15 +425,31 @@ export default function NewTransactionClient() {
                   </option>
                 ))}
               </select>
-              {categoryErr && <p id="cat-err" className="text-xs text-[rgb(var(--error))]">{categoryErr}</p>}
+              {categoryErr && <p id="cat-err" className="text-xs text-red-600 dark:text-red-400">{categoryErr}</p>}
             </div>
           </div>
         )}
 
         {/* Aksiyonlar */}
-        <div className="flex items-center gap-2">
-          <button className="btn btn-primary" type="submit">Kaydet</button>
-          <Link href="/dashboard" className="nav-link">İptal</Link>
+        <div className="flex items-center gap-3 pt-4">
+          <button 
+            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5" 
+            type="submit"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            Kaydet
+          </button>
+          <Link 
+            href="/dashboard" 
+            className="inline-flex items-center gap-2 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium rounded-xl transition-all duration-200"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            İptal
+          </Link>
         </div>
       </form>
     </main>

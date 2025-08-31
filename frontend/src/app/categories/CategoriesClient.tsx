@@ -18,7 +18,7 @@ function SegmentedKind({
 }) {
   return (
     <div
-      className="inline-flex items-center rounded-lg ring-1 ring-black/10 bg-[rgb(var(--card))] p-0.5"
+      className="inline-flex items-center rounded-xl ring-1 ring-gray-200 dark:ring-gray-700 bg-white dark:bg-gray-800 p-1 shadow-sm"
       role="tablist"
       aria-label="Kategori türü filtresi"
     >
@@ -26,18 +26,18 @@ function SegmentedKind({
         const active = value === k;
         const clr =
           k === 'INCOME'
-            ? 'text-[rgb(var(--success))]'
-            : 'text-[rgb(var(--error))]';
+            ? 'text-green-600 dark:text-green-400'
+            : 'text-red-600 dark:text-red-400';
         return (
           <button
             key={k}
             role="tab"
             aria-selected={active}
             className={[
-              'px-3 h-9 rounded-md text-sm transition-colors',
+              'px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200',
               active
-                ? 'bg-[rgb(var(--surface-1))] ring-1 ring-black/5'
-                : 'hover:bg-[rgb(var(--surface-1))]/60',
+                ? 'bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 text-blue-600 dark:text-blue-400 shadow-sm'
+                : 'hover:bg-gray-50 dark:hover:bg-gray-700/50',
               clr,
             ].join(' ')}
             onClick={() => onChange(k)}
@@ -53,20 +53,20 @@ function SegmentedKind({
 function LoadingSkeleton() {
   const rows = Array.from({ length: 6 });
   return (
-    <div className="reveal card overflow-hidden">
-      <div className="hidden md:grid grid-cols-4 gap-2 px-4 py-2 text-[11px] label-soft">
+    <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+      <div className="hidden md:grid grid-cols-4 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
         <div>Ad</div>
         <div>Tür</div>
         <div>Renk</div>
         <div className="text-right">İşlemler</div>
       </div>
-      <ul className="divide-y">
+      <ul className="divide-y divide-gray-100 dark:divide-gray-700">
         {rows.map((_, i) => (
-          <li key={i} className="grid md:grid-cols-4 grid-cols-2 gap-2 px-4 py-3">
-            <div className="col-span-2 md:col-span-1 h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-            <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-            <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
-            <div className="h-4 rounded bg-[rgb(var(--surface-1))] animate-pulse" />
+          <li key={i} className="grid md:grid-cols-4 grid-cols-2 gap-4 px-6 py-4">
+            <div className="col-span-2 md:col-span-1 h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
           </li>
         ))}
       </ul>
@@ -159,19 +159,32 @@ export default function CategoriesClient() {
   const headerPillColor = useMemo(
     () =>
       kind === 'INCOME'
-        ? 'text-[rgb(var(--success))]'
-        : 'text-[rgb(var(--error))]',
+        ? 'text-green-600 dark:text-green-400'
+        : 'text-red-600 dark:text-red-400',
     [kind]
   );
 
   return (
-    <main className="min-h-dvh p-6 space-y-6">
+    <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Başlık + Aksiyonlar */}
       <div className="reveal flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Kategoriler</h1>
-        <div className="flex items-center gap-2">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Kategoriler
+          </h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Gelir ve gider kategorilerinizi yönetin
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
           <SegmentedKind value={kind} onChange={onChangeKind} />
-          <Link href={`/categories/new?kind=${kind}`} className="btn btn-primary h-9">
+          <Link 
+            href={`/categories/new?kind=${kind}`} 
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
             Yeni Kategori
           </Link>
         </div>
@@ -179,8 +192,13 @@ export default function CategoriesClient() {
 
       {/* Hata */}
       {err && (
-        <div className="reveal card ring-1 ring-[rgb(var(--error))]/25" role="alert">
-          <p className="text-sm text-[rgb(var(--error))]">{err}</p>
+        <div className="reveal bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4" role="alert">
+          <div className="flex items-center gap-3">
+            <svg className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-sm text-red-600 dark:text-red-400">{err}</p>
+          </div>
         </div>
       )}
 
@@ -188,9 +206,9 @@ export default function CategoriesClient() {
       {loading ? (
         <LoadingSkeleton />
       ) : (
-        <div className="reveal card overflow-hidden" role="table" aria-label="Kategori listesi">
+        <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden" role="table" aria-label="Kategori listesi">
           {/* Başlık (md+) */}
-          <div className="hidden md:grid grid-cols-4 gap-2 px-4 py-2 text-[11px] label-soft" role="rowgroup">
+          <div className="hidden md:grid grid-cols-4 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50" role="rowgroup">
             <div role="columnheader">Ad</div>
             <div role="columnheader">Tür</div>
             <div role="columnheader">Renk</div>
@@ -198,38 +216,44 @@ export default function CategoriesClient() {
           </div>
 
           {items.length === 0 ? (
-            <div className="px-4 py-8 text-center">
-              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="px-6 py-12 text-center">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-900/20 dark:to-purple-900/20 flex items-center justify-center">
+                <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold mb-2">Henüz Kategori Yok</h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md mx-auto">
+              <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Henüz Kategori Yok</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
                 {kind === 'INCOME' ? 'Gelir' : 'Gider'} kategorilerinizi oluşturarak işlemlerinizi daha iyi organize edebilirsiniz.
               </p>
-              <Link href={`/categories/new?kind=${kind}`} className="btn btn-primary">
+              <Link 
+                href={`/categories/new?kind=${kind}`} 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:-translate-y-0.5"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
                 Kategori Oluştur
               </Link>
             </div>
           ) : (
-            <ul className="divide-y" role="rowgroup">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-700" role="rowgroup">
               {items.map((c) => (
                 <li
                   key={c.id}
                   role="row"
                   className={[
-                    'grid md:grid-cols-4 grid-cols-2 gap-2 px-4 py-2 text-sm',
-                    'hover:bg-[rgb(var(--surface-1))]/60 transition-colors',
-                    'focus-within:bg-[rgb(var(--surface-1))]/60',
+                    'grid md:grid-cols-4 grid-cols-2 gap-4 px-6 py-4 text-sm',
+                    'hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200',
+                    'focus-within:bg-gray-50 dark:focus-within:bg-gray-700/50',
                   ].join(' ')}
                 >
                   {/* Ad */}
                   <div role="cell" className="truncate order-1 md:order-none md:col-auto col-span-2">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{c.name}</span>
+                    <div className="flex items-center gap-3">
+                      <span className="font-medium text-gray-900 dark:text-white">{c.name}</span>
                       {c.isSystem && (
-                        <span className="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300">
                           Sistem
                         </span>
                       )}
@@ -240,11 +264,10 @@ export default function CategoriesClient() {
                   <div role="cell" className="order-3 md:order-none">
                     <span
                       className={[
-                        'pill h-6 px-2 text-[11px]',
+                        'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border',
                         c.kind === 'INCOME'
-                          ? 'text-[rgb(var(--success))]'
-                          : 'text-[rgb(var(--error))]',
-                        'bg-[rgb(var(--surface-1))]',
+                          ? 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800'
+                          : 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800',
                       ].join(' ')}
                       title={CATEGORY_KIND_LABELS_TR[c.kind]}
                     >
@@ -253,28 +276,28 @@ export default function CategoriesClient() {
                   </div>
 
                   {/* Renk */}
-                  <div role="cell" className="flex items-center gap-2 order-2 md:order-none">
+                  <div role="cell" className="flex items-center gap-3 order-2 md:order-none">
                     {c.color ? (
                       <>
                         <span
-                          className="inline-block h-3 w-3 rounded-full border border-black/10"
+                          className="inline-block h-4 w-4 rounded-full border-2 border-gray-200 dark:border-gray-600 shadow-sm"
                           style={{ background: c.color }}
                           title={c.color}
                           aria-label={`Renk ${c.color}`}
                         />
-                        <span className="text-xs label-soft">{c.color}</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{c.color}</span>
                       </>
                     ) : (
-                      <span className="text-xs label-soft">—</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">—</span>
                     )}
                   </div>
 
                   {/* İşlemler */}
                   <div role="cell" className="flex items-center justify-end gap-2 order-4 md:order-none">
-                    <div className="flex items-center gap-1 sm:gap-2">
+                    <div className="flex items-center gap-1">
                       <Link
                         href={`/categories/${c.id}/edit`}
-                        className="p-1 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors rounded"
+                        className="p-2 text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all duration-200 rounded-lg"
                         title="Düzenle"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,7 +308,7 @@ export default function CategoriesClient() {
                         <button
                           onClick={() => deleteCategory(c.id)}
                           disabled={deletingId === c.id}
-                          className="p-1 text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors disabled:opacity-50 rounded"
+                          className="p-2 text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 disabled:opacity-50 rounded-lg"
                           title="Sil"
                         >
                           {deletingId === c.id ? (
@@ -308,10 +331,15 @@ export default function CategoriesClient() {
         </div>
       )}
 
-      {/* Aktif filtre bilgisi (soft) */}
-      <p className={['label-soft text-xs', headerPillColor].join(' ')}>
-        Aktif tür: <span className="font-medium">{kind}</span>
-      </p>
+      {/* Aktif filtre bilgisi */}
+      <div className="reveal flex items-center justify-between">
+        <p className={['text-xs text-gray-500 dark:text-gray-400', headerPillColor].join(' ')}>
+          Aktif tür: <span className="font-medium">{CATEGORY_KIND_LABELS_TR[kind]}</span>
+        </p>
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          Toplam: {items.length} kategori
+        </p>
+      </div>
     </main>
   );
 }
