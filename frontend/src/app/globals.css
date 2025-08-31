@@ -119,6 +119,31 @@ body { @apply bg-background text-foreground; }
   * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 
+/* Responsive iyileştirmeler */
+@media (max-width: 640px) {
+  /* Mobilde daha küçük padding */
+  .container {
+    padding-inline: 1rem;
+  }
+  
+  /* Mobilde daha küçük font boyutları */
+  h1 { font-size: 1.875rem; line-height: 2.25rem; }
+  h2 { font-size: 1.5rem; line-height: 2rem; }
+  h3 { font-size: 1.25rem; line-height: 1.75rem; }
+  
+  /* Mobilde daha küçük butonlar */
+  .btn {
+    height: 2.25rem;
+    padding-inline: 0.75rem;
+    font-size: 0.875rem;
+  }
+  
+  /* Mobilde daha küçük kartlar */
+  .card {
+    padding: 1rem;
+  }
+}
+
 /* ──────────────────────────────────────────────────────────
    3) YARDIMCI UTILITIES (Tailwind v4 @utility)
    - v3'teki @layer yerine v4'te @utility kullan.

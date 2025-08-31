@@ -39,12 +39,12 @@ export default function NewAccountPage() {
         currency: 'TRY', // Her zaman TRY olacak
       };
       await AccountsAPI.create(payload);
-      show('Hesap başarıyla oluşturuldu!', 'success');
+      show('Hesap başarıyla oluşturuldu!', 'success', 4000, 'Başarılı');
       router.replace('/accounts');
     } catch (e: unknown) {
       const errorMessage = e instanceof Error ? e.message : String(e);
       setErr(errorMessage);
-      show(errorMessage, 'error');
+      show(errorMessage, 'error', 5000, 'Hata');
       setLoading(false);
     }
   }

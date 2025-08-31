@@ -31,12 +31,36 @@ export async function api<T = unknown>(
 
   if (!res.ok) {
     // Hata mesajını okunur hale getirme
-    let message = `Request failed (${res.status})`;
+    let message = `İstek başarısız (${res.status})`;
     try {
       const text = await res.text();
-      if (text) message = text;
+      if (text) {
+        // Backend'den gelen hata mesajını kullan
+        message = text;
+      } else {
+        // HTTP status koduna göre genel mesajlar
+        switch (res.status) {
+          case 400:
+            message = 'Geçersiz istek. Lütfen bilgilerinizi kontrol edin.';
+            break;
+          case 401:
+            message = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
+            break;
+          case 403:
+            message = 'Bu işlem için yetkiniz bulunmuyor.';
+            break;
+          case 404:
+            message = 'İstenen kaynak bulunamadı.';
+            break;
+          case 500:
+            message = 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.';
+            break;
+          default:
+            message = `Beklenmeyen bir hata oluştu (${res.status})`;
+        }
+      }
     } catch {
-      /* ignore */
+      message = 'Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin.';
     }
     // "any" kullanmadan Error nesnesi fırlat
     throw new Error(message);

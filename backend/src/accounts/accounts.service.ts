@@ -45,7 +45,7 @@ export class AccountsService {
       where: { id, owner },
       withDeleted: false // Silinmiş hesapları gösterme
     });
-    if (!acc) throw new Error('Account not found');
+    if (!acc) throw new Error('Hesap bulunamadı');
     return acc;
   }
 
@@ -54,7 +54,7 @@ export class AccountsService {
       where: { id, owner },
       withDeleted: false // Silinmiş hesapları gösterme
     });
-    if (!acc) throw new Error('Account not found');
+    if (!acc) throw new Error('Hesap bulunamadı');
     
     if (dto.name !== undefined) acc.name = dto.name;
     if (dto.type !== undefined) acc.type = dto.type;

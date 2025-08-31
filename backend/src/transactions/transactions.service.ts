@@ -98,10 +98,10 @@ export class TransactionsService {
 
     if (dto.type === 'TRANSFER') {
       if (!dto.fromAccountId || !dto.toAccountId) {
-        throw new BadRequestException('fromAccountId ve toAccountId zorunlu');
+        throw new BadRequestException('Gönderen ve alıcı hesap bilgileri zorunludur');
       }
       if (dto.fromAccountId === dto.toAccountId) {
-        throw new BadRequestException('Aynı hesaplar arasında transfer olmaz');
+        throw new BadRequestException('Aynı hesaplar arasında transfer yapılamaz');
       }
       const t = this.repo.create({
         title: dto.title.trim(),
@@ -119,13 +119,13 @@ export class TransactionsService {
 
     // INCOME | EXPENSE
     if (!dto.accountId || !dto.categoryId) {
-      throw new BadRequestException('accountId ve categoryId zorunlu');
+      throw new BadRequestException('Hesap ve kategori bilgileri zorunludur');
     }
     // Kategori tipini kontrol et ve işaret doğrulaması yap
     const cat = await this.catRepo.findOne({ where: { id: dto.categoryId } });
-    if (!cat) throw new BadRequestException('Geçersiz categoryId');
+    if (!cat) throw new BadRequestException('Seçilen kategori bulunamadı');
     if (cat.kind !== dto.type) throw new BadRequestException('Kategori tipi ile işlem tipi uyumsuz');
-    if (dto.amount <= 0) throw new BadRequestException('Tutar pozitif olmalı');
+    if (dto.amount <= 0) throw new BadRequestException('Tutar sıfırdan büyük olmalıdır');
     
     // EXPENSE için tutarı negatif yap
     const finalAmount = dto.type === 'EXPENSE' ? -Math.abs(dto.amount) : Math.abs(dto.amount);

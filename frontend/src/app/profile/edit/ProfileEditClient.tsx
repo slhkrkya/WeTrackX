@@ -60,11 +60,11 @@ export default function ProfileEditClient() {
       
       await UsersAPI.updateProfile(formData);
 
-      show('Profil başarıyla güncellendi', 'success');
+      show('Profil başarıyla güncellendi', 'success', 4000, 'Başarılı');
       router.push('/profile');
     } catch (error: any) {
       const message = error?.message || 'Profil güncellenirken hata oluştu';
-      show(message, 'error');
+      show(message, 'error', 5000, 'Hata');
       setErr(message);
     } finally {
       setSaving(false);

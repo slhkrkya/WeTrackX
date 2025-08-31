@@ -173,18 +173,23 @@ export default function TopNav() {
         {/* Mobile menu button */}
         <button
           onClick={() => setOpen(!open)}
-          className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200"
           aria-label="Menüyü aç/kapat"
+          aria-expanded={open}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          <svg className="w-5 h-5 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            {open ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            )}
           </svg>
         </button>
       </div>
 
       {/* Mobile menu */}
       {open && (
-        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+        <div className="md:hidden border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 animate-in slide-in-from-top-2 duration-200">
           <nav className="px-4 py-2 space-y-1">
             {NAV.map((n) => {
               const active = isActive(n.href);
@@ -193,10 +198,10 @@ export default function TopNav() {
                   key={n.href}
                   href={n.href}
                   className={[
-                    'block px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    'block px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                     active 
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm' 
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white',
                   ].join(' ')}
                   aria-current={active ? 'page' : undefined}
                 >
@@ -207,13 +212,13 @@ export default function TopNav() {
             <hr className="my-2 border-gray-200 dark:border-gray-700" />
             <Link
               href="/profile"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
             >
               Profil
             </Link>
             <button
               onClick={onLogout}
-              className="block w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+              className="block w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
             >
               Çıkış Yap
             </button>
