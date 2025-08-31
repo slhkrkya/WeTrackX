@@ -39,7 +39,7 @@ export default function RouteLoading() {
   if (!isLoading) return null;
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 flex items-center justify-center">
+    <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm z-40 flex items-center justify-center">
       <div className="flex flex-col items-center gap-4">
         <LogoLoading size={64} />
         <p className="text-sm text-muted-600 dark:text-muted-400">

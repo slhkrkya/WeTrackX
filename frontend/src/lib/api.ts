@@ -35,8 +35,21 @@ export async function api<T = unknown>(
     try {
       const text = await res.text();
       if (text) {
-        // Backend'den gelen hata mesajını kullan
-        message = text;
+        // JSON formatında gelip gelmediğini kontrol et
+        try {
+          const errorData = JSON.parse(text);
+          // Backend'den gelen message field'ını kullan
+          if (errorData.message) {
+            message = errorData.message;
+          } else if (errorData.error) {
+            message = errorData.error;
+          } else {
+            message = text;
+          }
+        } catch {
+          // JSON değilse direkt text'i kullan
+          message = text;
+        }
       } else {
         // HTTP status koduna göre genel mesajlar
         switch (res.status) {

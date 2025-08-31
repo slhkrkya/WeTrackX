@@ -171,9 +171,39 @@ export default function ProfileClient() {
       }, 2000);
       
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Şifre değiştirilirken hata oluştu';
-      show(message, 'error');
-      setErr(message);
+      // Hata mesajını kullanıcı dostu hale getir
+      let userFriendlyMessage = 'Şifre değiştirilirken hata oluştu';
+      
+      if (error instanceof Error) {
+        const errorMessage = error.message;
+        
+        // Şifre ile ilgili özel hata mesajları
+        if (errorMessage.includes('Mevcut şifre yanlış')) {
+          userFriendlyMessage = 'Mevcut şifrenizi yanlış girdiniz. Lütfen tekrar deneyin.';
+        } else if (errorMessage.includes('Kullanıcı bulunamadı')) {
+          userFriendlyMessage = 'Kullanıcı bilgileriniz bulunamadı. Lütfen tekrar giriş yapın.';
+        } else if (errorMessage.includes('Geçersiz istek')) {
+          userFriendlyMessage = 'Girdiğiniz bilgiler hatalı. Lütfen kontrol edip tekrar deneyin.';
+        } else if (errorMessage.includes('Oturum süreniz dolmuş')) {
+          userFriendlyMessage = 'Oturum süreniz dolmuş. Lütfen tekrar giriş yapın.';
+        } else if (errorMessage.includes('Bağlantı hatası')) {
+          userFriendlyMessage = 'İnternet bağlantınızı kontrol edip tekrar deneyin.';
+        } else if (errorMessage.includes('Sunucu hatası')) {
+          userFriendlyMessage = 'Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.';
+        } else {
+          // Genel hata mesajı
+          userFriendlyMessage = errorMessage;
+        }
+      }
+      
+      // Sadece toast mesajı göster, sayfa yenileme
+      show(userFriendlyMessage, 'error');
+      
+      // Eski şifre alanını temizle (kullanıcı tekrar denesin)
+      setPasswordFormData(prev => ({
+        ...prev,
+        oldPassword: ''
+      }));
     } finally {
       setSaving(false);
     }
@@ -243,7 +273,7 @@ export default function ProfileClient() {
 
       {/* Profil Bilgileri */}
       <div className="reveal bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6 space-y-6">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
           <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
@@ -253,22 +283,22 @@ export default function ProfileClient() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Ad Soyad</span>
-            <p className="font-medium text-lg">{profile.name || 'Belirtilmemiş'}</p>
+            <p className="font-medium text-lg text-gray-900 dark:text-white">{profile.name || 'Belirtilmemiş'}</p>
           </div>
           
           <div className="space-y-1">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">E-posta</span>
-            <p className="font-medium text-lg">{profile.email}</p>
+            <p className="font-medium text-lg text-gray-900 dark:text-white">{profile.email}</p>
           </div>
           
           <div className="space-y-1">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Üyelik Tarihi</span>
-            <p className="font-medium">{fmtDate(profile.createdAt)}</p>
+            <p className="font-medium text-gray-900 dark:text-white">{fmtDate(profile.createdAt)}</p>
           </div>
           
           <div className="space-y-1">
             <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Hesap ID</span>
-            <p className="font-mono text-sm bg-gray-100/80 dark:bg-gray-700/80 px-3 py-2 rounded-lg border border-gray-200/50 dark:border-gray-600/50">
+            <p className="font-mono text-sm bg-gray-100/80 dark:bg-gray-700/80 px-3 py-2 rounded-lg border border-gray-200/50 dark:border-gray-600/50 text-gray-900 dark:text-white">
               {profile.id}
             </p>
           </div>
@@ -277,7 +307,7 @@ export default function ProfileClient() {
 
       {/* Profil Düzenleme */}
       <div className="reveal bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6 space-y-6">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
           <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
               </svg>
@@ -338,7 +368,7 @@ export default function ProfileClient() {
 
       {/* Şifre Değiştirme */}
       <div className="reveal bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/50 p-6 space-y-6">
-        <h2 className="text-lg font-semibold flex items-center gap-2">
+        <h2 className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-white">
           <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
               </svg>

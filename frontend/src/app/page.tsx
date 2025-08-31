@@ -44,7 +44,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* === HERO SECTION === */}
       <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         {/* Background Decorations */}
@@ -132,7 +132,7 @@ export default function Home() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                       </svg>
                     </div>
-                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-600 rounded">Hesap Seçimi</div>
+                    <div className="text-sm text-gray-700 dark:text-gray-300 font-medium">Hesap Seçimi</div>
                   </div>
                   <div className="bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-medium">
                     Canlı
@@ -176,14 +176,14 @@ export default function Home() {
                     <div className="text-lg font-bold">₺12.050,00</div>
                   </div>
 
-                  {/* Ziraat Banka - Seçili */}
+                  {/* Banka Hesabı - Seçili */}
                   <div className="bg-gradient-to-r from-blue-600 to-gray-700 rounded-xl p-4 text-white relative border-2 border-blue-400">
                     <div className="absolute top-2 right-2 bg-white/20 text-xs px-2 py-1 rounded-full">Banka</div>
                     <div className="flex items-center gap-2 mb-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                       </svg>
-                      <span className="text-sm font-medium">Ziraat Banka</span>
+                      <span className="text-sm font-medium">Banka Hesabı</span>
                     </div>
                     <div className="text-lg font-bold">₺83.999,50</div>
                   </div>
@@ -193,7 +193,7 @@ export default function Home() {
                 <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">Ziraat Banka</h3>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">Banka Hesabı</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">Seçili hesap</p>
                     </div>
                     <div className="text-right">
@@ -222,7 +222,7 @@ export default function Home() {
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-red-600">-₺30.000,50</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">15.01.2026</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">15.08.2025</div>
                     </div>
                   </div>
 
@@ -235,13 +235,13 @@ export default function Home() {
                         </svg>
                       </div>
                       <div>
-                        <div className="font-medium text-gray-900 dark:text-white">Komisyon</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Komisyon</div>
+                        <div className="font-medium text-gray-900 dark:text-white">Kira Geliri</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">Zam Yaptım</div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold text-green-600">+₺36.000,00</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">08.10.2025</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">01.08.2025</div>
                     </div>
                   </div>
                 </div>
@@ -252,7 +252,7 @@ export default function Home() {
       </section>
 
       {/* === FEATURES SECTION === */}
-      <section className="py-20 bg-white dark:bg-gray-900">
+      <section className="py-20 bg-gray-50 dark:bg-gray-900">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
@@ -265,7 +265,7 @@ export default function Home() {
 
           <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1: Finansal Yönetim */}
-            <div className="group bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="group bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/30 dark:to-indigo-900/30 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-blue-100/50 dark:border-blue-800/30">
               <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
@@ -280,7 +280,7 @@ export default function Home() {
             </div>
 
             {/* Feature 2: Takip Sistemi */}
-            <div className="group bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="group bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-purple-100/50 dark:border-purple-800/30">
               <div className="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -295,7 +295,7 @@ export default function Home() {
             </div>
 
             {/* Feature 3: Kategorizasyon */}
-            <div className="group bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="group bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-green-100/50 dark:border-green-800/30">
               <div className="w-16 h-16 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
@@ -310,7 +310,7 @@ export default function Home() {
             </div>
 
             {/* Feature 4: Analiz */}
-            <div className="group bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+            <div className="group bg-gradient-to-br from-orange-50 to-red-50 dark:from-orange-900/30 dark:to-red-900/30 rounded-2xl p-8 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-orange-100/50 dark:border-orange-800/30">
               <div className="w-16 h-16 bg-gradient-to-r from-orange-600 to-red-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -372,46 +372,47 @@ export default function Home() {
       {/* === FOOTER === */}
       <footer className="bg-gray-900 text-white py-12">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-2xl font-bold mb-4">WeTrackX</h3>
-              <p className="text-gray-400">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 items-start">
+            {/* Brand Section */}
+            <div className="md:col-span-1">
+              <Link href="/" className="block">
+                <h3 className="text-2xl font-bold mb-4 hover:text-blue-400 transition-colors">WeTrackX</h3>
+              </Link>
+              <p className="text-gray-400 mb-4">
                 Kişisel finanslarınızı akıllıca yönetin.
               </p>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Ürün</h4>
+            
+            {/* Product Section */}
+            <div className="md:col-span-1">
+              <h4 className="font-semibold mb-4 text-white">Ürün</h4>
               <ul className="space-y-2 text-gray-400">
-                {isAuth ? (
-                  <>
-                    <li><Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
-                    <li><Link href="/transactions" className="hover:text-white transition-colors">İşlemler</Link></li>
-                    <li><Link href="/reports" className="hover:text-white transition-colors">Raporlar</Link></li>
-                  </>
-                ) : (
-                  <>
-                    <li><Link href="/auth/login" className="hover:text-white transition-colors">Dashboard</Link></li>
-                    <li><Link href="/auth/login" className="hover:text-white transition-colors">İşlemler</Link></li>
-                    <li><Link href="/auth/login" className="hover:text-white transition-colors">Raporlar</Link></li>
-                  </>
-                )}
+                <li><Link href="/" className="hover:text-white transition-colors">Dashboard</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">İşlemler</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">Raporlar</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Destek</h4>
+            
+            {/* Support Section */}
+            <div className="md:col-span-1">
+              <h4 className="font-semibold mb-4 text-white">Destek</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/auth/login" className="hover:text-white transition-colors">Yardım</Link></li>
-                <li><Link href="/auth/login" className="hover:text-white transition-colors">İletişim</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">Yardım</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">İletişim</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Yasal</h4>
+            
+            {/* Legal Section */}
+            <div className="md:col-span-1">
+              <h4 className="font-semibold mb-4 text-white">Yasal</h4>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/auth/login" className="hover:text-white transition-colors">Gizlilik</Link></li>
-                <li><Link href="/auth/login" className="hover:text-white transition-colors">Şartlar</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">Gizlilik</Link></li>
+                <li><Link href="/" className="hover:text-white transition-colors">Şartlar</Link></li>
               </ul>
             </div>
           </div>
+          
+          {/* Copyright Section */}
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
             <p>&copy; 2024 WeTrackX. Tüm hakları saklıdır.</p>
           </div>

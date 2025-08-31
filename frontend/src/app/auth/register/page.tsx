@@ -11,31 +11,58 @@ type RegisterRes = { user: AuthUser; token: string };
 
 function getErrorMessage(e: unknown) {
   if (e instanceof Error) {
-    // JSON formatındaki hata mesajlarını parse et
-    try {
-      const errorData = JSON.parse(e.message);
-      if (errorData.message) {
-        return errorData.message;
+    const errorMessage = e.message;
+    
+    // Şifre ile ilgili özel hata mesajları
+    if (errorMessage.includes('password must be longer than or equal to 6 characters')) {
+      return 'Şifre en az 6 karakter olmalıdır';
+    } else if (errorMessage.includes('password must be shorter than or equal to 72 characters')) {
+      return 'Şifre en fazla 72 karakter olabilir';
+    } else if (errorMessage.includes('email must be an email')) {
+      return 'Geçerli bir e-posta adresi girin';
+    } else if (errorMessage.includes('email should not be empty')) {
+      return 'E-posta adresi zorunludur';
+    } else if (errorMessage.includes('password should not be empty')) {
+      return 'Şifre zorunludur';
+    } else if (errorMessage.includes('name must be shorter than or equal to 64 characters')) {
+      return 'İsim en fazla 64 karakter olabilir';
+    } else if (errorMessage.includes('Bu e-posta adresi zaten kullanılıyor')) {
+      return 'Bu e-posta adresi zaten kullanılıyor. Farklı bir e-posta adresi deneyin.';
+    } else if (errorMessage.includes('Conflict')) {
+      return 'Bu e-posta adresi zaten kullanılıyor. Farklı bir e-posta adresi deneyin.';
+    } else if (errorMessage.includes('Geçersiz istek')) {
+      return 'Girdiğiniz bilgiler hatalı. Lütfen kontrol edip tekrar deneyin.';
+    } else if (errorMessage.includes('Bağlantı hatası')) {
+      return 'İnternet bağlantınızı kontrol edip tekrar deneyin.';
+    } else if (errorMessage.includes('Sunucu hatası')) {
+      return 'Sunucu hatası oluştu. Lütfen daha sonra tekrar deneyin.';
+    } else {
+      // JSON formatındaki hata mesajlarını parse et
+      try {
+        const errorData = JSON.parse(errorMessage);
+        if (errorData.message) {
+          return errorData.message;
+        }
+        if (errorData.error === 'Conflict') {
+          return 'Bu e-posta adresi zaten kullanılıyor';
+        }
+        if (errorData.error === 'Bad Request') {
+          return 'Geçersiz bilgi gönderildi';
+        }
+        if (errorData.statusCode === 409) {
+          return 'Bu e-posta adresi zaten kullanılıyor';
+        }
+        if (errorData.statusCode === 400) {
+          return 'Geçersiz bilgi gönderildi';
+        }
+        if (errorData.statusCode === 500) {
+          return 'Sunucu hatası oluştu, lütfen tekrar deneyin';
+        }
+        return errorData.message || 'Bir hata oluştu';
+      } catch {
+        // JSON parse edilemezse orijinal mesajı kullan
+        return errorMessage;
       }
-      if (errorData.error === 'Conflict') {
-        return 'Bu e-posta adresi zaten kullanılıyor';
-      }
-      if (errorData.error === 'Bad Request') {
-        return 'Geçersiz bilgi gönderildi';
-      }
-      if (errorData.statusCode === 409) {
-        return 'Bu e-posta adresi zaten kullanılıyor';
-      }
-      if (errorData.statusCode === 400) {
-        return 'Geçersiz bilgi gönderildi';
-      }
-      if (errorData.statusCode === 500) {
-        return 'Sunucu hatası oluştu, lütfen tekrar deneyin';
-      }
-      return errorData.message || 'Bir hata oluştu';
-    } catch {
-      // JSON parse edilemezse orijinal mesajı kullan
-      return e.message;
     }
   }
   

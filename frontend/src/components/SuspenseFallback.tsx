@@ -23,7 +23,7 @@ export default function SuspenseFallback({
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 backdrop-blur-sm z-50 flex items-center justify-center">
         {content}
       </div>
     );

@@ -817,7 +817,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                 <select
                   value={selectedYear || ''}
                   onChange={(e) => setSelectedYear(e.target.value ? Number(e.target.value) : null)}
-                  className="appearance-none text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 pr-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm"
+                  className="appearance-none text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 pr-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm"
                 >
                   <option value="">Tüm Yıllar</option>
                   {yearOptions.map((year: number) => (
@@ -841,9 +841,9 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                   disabled={!selectedYear}
                   className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 font-medium ${
                     viewMode === 'monthly' && selectedYear
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                       : selectedYear
-                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
                       : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                   aria-pressed={viewMode === 'monthly'}
@@ -855,9 +855,9 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                   disabled={selectedYear !== null}
                   className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 font-medium ${
                     viewMode === 'yearly' && selectedYear === null
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-gray-100 shadow-sm'
+                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
                       : selectedYear === null
-                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-600'
+                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
                       : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                   aria-pressed={viewMode === 'yearly'}
@@ -895,7 +895,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
               className="w-3 h-3 rounded-full shadow-sm" 
               style={{ backgroundColor: tooltip.color }}
             />
-            <span className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+            <span className="font-semibold text-gray-900 dark:text-white truncate">
               {tooltip.label}
             </span>
           </div>

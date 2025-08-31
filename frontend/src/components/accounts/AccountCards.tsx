@@ -135,7 +135,7 @@ function SortableAccountCard({
       {...listeners}
       className={`snap-center shrink-0 w-full h-48 rounded-2xl shadow-lg 
         ${styles.gradient} 
-        ${isWallet ? 'text-gray-800' : 'text-white'} 
+        ${isWallet ? 'text-gray-800 dark:text-gray-200' : 'text-white'} 
         p-6 flex flex-col justify-between relative overflow-hidden
         hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1
         cursor-grab active:cursor-grabbing

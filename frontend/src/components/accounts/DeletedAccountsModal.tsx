@@ -14,10 +14,10 @@ type Props = {
 
 // Hesap türüne göre renkler
 const accountTypeColors = {
-  BANK: 'bg-gray-100 text-gray-800',
-  CASH: 'bg-amber-100 text-amber-800',
-  CARD: 'bg-blue-100 text-blue-800',
-  WALLET: 'bg-green-100 text-green-800',
+  BANK: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
+  CASH: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200',
+  CARD: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200',
+  WALLET: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200',
 };
 
 export default function DeletedAccountsModal({ isOpen, onClose, onRestore }: Props) {
