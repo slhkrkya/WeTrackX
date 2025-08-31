@@ -67,6 +67,7 @@ export class TransactionsService {
         'category.id', 'category.name',
       ])
       .where('t.ownerId = :ownerId', { ownerId: (owner as any).id })
+      .andWhere('t.deletedAt IS NULL') // Silinmiş işlemleri gösterme
       .orderBy(orderBy, orderDir);
 
     if (opts?.from) baseQb.andWhere('t.date >= :from', { from: opts.from });
@@ -199,6 +200,7 @@ export class TransactionsService {
       ])
       .where('t.id = :id', { id })
       .andWhere('t.ownerId = :ownerId', { ownerId: (owner as any).id })
+      .andWhere('t.deletedAt IS NULL') // Silinmiş işlemleri gösterme
       .getOne();
 
     if (!tx) throw new NotFoundException('Transaction not found');
@@ -208,7 +210,65 @@ export class TransactionsService {
   async remove(owner: User, id: string) {
     const tx = await this.repo.findOne({ where: { id, owner } });
     if (!tx) throw new NotFoundException('Transaction not found');
-    await this.repo.remove(tx);
+    await this.repo.softRemove(tx);
     return true;
+  }
+
+  // Hesaba bağlı tüm işlemleri soft delete yap
+  async softDeleteByAccount(owner: User, accountId: string) {
+    try {
+      // Hesaba bağlı tüm işlemleri bul (account, fromAccount, toAccount)
+      const transactions = await this.repo.find({
+        where: [
+          { owner, account: { id: accountId } as any },
+          { owner, fromAccount: { id: accountId } as any },
+          { owner, toAccount: { id: accountId } as any }
+        ],
+        withDeleted: false
+      });
+
+      if (transactions.length > 0) {
+        // Tüm işlemleri soft delete yap
+        await this.repo.softRemove(transactions);
+        console.log(`${transactions.length} adet işlem soft delete yapıldı (hesap: ${accountId})`);
+      }
+
+      return transactions.length;
+    } catch (error) {
+      console.error('İşlemleri soft delete yaparken hata:', error);
+      throw error;
+    }
+  }
+
+  // Hesaba bağlı tüm işlemleri geri yükle
+  async restoreByAccount(owner: User, accountId: string) {
+    try {
+      // Hesaba bağlı tüm silinmiş işlemleri bul
+      const deletedTransactions = await this.repo.find({
+        where: [
+          { owner, account: { id: accountId } as any },
+          { owner, fromAccount: { id: accountId } as any },
+          { owner, toAccount: { id: accountId } as any }
+        ],
+        withDeleted: true
+      });
+
+      const transactionsToRestore = deletedTransactions.filter(tx => tx.deletedAt !== null);
+
+      if (transactionsToRestore.length > 0) {
+        // Tüm işlemlerin ID'lerini al
+        const transactionIds = transactionsToRestore.map(tx => tx.id);
+        
+        // Raw SQL ile deletedAt'i NULL yap
+        await this.repo.query('UPDATE "transaction" SET "deletedAt" = NULL WHERE "id" = ANY($1)', [transactionIds]);
+        
+        console.log(`${transactionsToRestore.length} adet işlem geri yüklendi (hesap: ${accountId})`);
+      }
+
+      return transactionsToRestore.length;
+    } catch (error) {
+      console.error('İşlemleri geri yüklerken hata:', error);
+      throw error;
+    }
   }
 }

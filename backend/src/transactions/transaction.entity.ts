@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryGeneratedColumn, Column, ManyToOne,
-  CreateDateColumn, UpdateDateColumn, Index,
+  CreateDateColumn, UpdateDateColumn, Index, DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Account } from '../accounts/account.entity';
@@ -37,21 +37,18 @@ export class Transaction {
 
   // Income/Expense için tek hesap
   @ManyToOne(() => Account, (a) => a.transactions, { 
-    nullable: true,
-    onDelete: 'CASCADE' // Hesap silindiğinde işlemler de silinsin
+    nullable: true
   })
   account?: Account;
 
   // Transfer için çift hesap
   @ManyToOne(() => Account, (a) => a.outgoingTransfers, { 
-    nullable: true,
-    onDelete: 'CASCADE' // Hesap silindiğinde transfer işlemleri de silinsin
+    nullable: true
   })
   fromAccount?: Account;
 
   @ManyToOne(() => Account, (a) => a.incomingTransfers, { 
-    nullable: true,
-    onDelete: 'CASCADE' // Hesap silindiğinde transfer işlemleri de silinsin
+    nullable: true
   })
   toAccount?: Account;
 
@@ -67,4 +64,7 @@ export class Transaction {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deletedAt?: Date; // Soft delete için silinme tarihi
 }

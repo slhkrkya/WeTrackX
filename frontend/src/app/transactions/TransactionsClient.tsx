@@ -488,6 +488,21 @@ export default function TransactionsClient() {
 
         {items.length === 0 ? (
           <div className="px-4 py-8 text-center">
+            {/* Silinmiş hesaplar bilgisi */}
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg mb-6 max-w-md mx-auto">
+              <div className="flex items-start space-x-3">
+                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div>
+                  <h4 className="text-sm font-medium text-blue-900 dark:text-blue-100">Silinmiş Hesaplar</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    Silinmiş hesaplara ait işlemler burada görünmez. Hesabı geri yüklediğinizde işlemler de geri gelir.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
               <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />

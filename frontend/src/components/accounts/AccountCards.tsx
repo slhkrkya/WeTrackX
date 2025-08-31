@@ -318,7 +318,7 @@ export default function AccountCards({ items, balances, onDelete, onRestore }: P
     const account = items.find(item => item.id === id);
     const accountName = account?.name || 'Hesap';
     
-    if (!confirm(`${accountName} hesabını silmek istediğinizden emin misiniz?\n\n⚠️ Hesap silinecek ancak 7 gün boyunca geri yüklenebilir.\n💾 İşlemler korunacaktır.\n⏰ 7 gün sonra kalıcı olarak silinir.`)) {
+    if (!confirm(`${accountName} hesabını silmek istediğinizden emin misiniz?\n\n⚠️ Hesap silinecek ancak 7 gün boyunca geri yüklenebilir.\n💾 İşlemler korunacaktır.\n⏰ 7 gün sonra kalıcı olarak silinir.\n\n📊 Bu hesaba ait tüm işlemler de geçici olarak gizlenecek.`)) {
       return;
     }
 

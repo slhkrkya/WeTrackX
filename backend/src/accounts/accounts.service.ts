@@ -1,10 +1,11 @@
 // src/accounts/accounts.service.ts
 import { Injectable } from '@nestjs/common';
-import { Repository, Not, IsNull } from 'typeorm';
+import { Repository, Not, IsNull, LessThan } from 'typeorm';
 import { Account, AccountType } from './account.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../users/user.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { TransactionsService } from '../transactions/transactions.service';
 
 type CreateAccountDto = {
   name: string;
@@ -14,7 +15,10 @@ type CreateAccountDto = {
 
 @Injectable()
 export class AccountsService {
-  constructor(@InjectRepository(Account) private repo: Repository<Account>) {}
+  constructor(
+    @InjectRepository(Account) private repo: Repository<Account>,
+    private transactionsService: TransactionsService
+  ) {}
 
   list(owner: User) {
     return this.repo.find({ 
@@ -67,8 +71,14 @@ export class AccountsService {
     if (!acc) return null;
     
     try {
-      // Soft delete - hesabı silinmiş olarak işaretle
+      // Önce hesaba bağlı tüm işlemleri soft delete yap
+      const deletedTransactionsCount = await this.transactionsService.softDeleteByAccount(owner, id);
+      console.log(`Hesap silinmeden önce ${deletedTransactionsCount} adet işlem soft delete yapıldı`);
+      
+      // Sonra hesabı soft delete yap
       await this.repo.softRemove(acc);
+      console.log(`Hesap soft delete yapıldı: ${acc.name} (${id})`);
+      
       return true;
     } catch (e: any) {
       console.error('Hesap silme hatası:', e);
@@ -105,8 +115,12 @@ export class AccountsService {
     if (!acc.deletedAt) throw new Error('Bu hesap zaten aktif durumda');
     
     try {
-      // Manuel olarak deletedAt'i NULL yap
+      // Önce hesabı geri yükle
       await this.repo.query('UPDATE "account" SET "deletedAt" = NULL WHERE "id" = $1', [id]);
+      
+      // Sonra hesaba bağlı tüm işlemleri geri yükle
+      const restoredTransactionsCount = await this.transactionsService.restoreByAccount(owner, id);
+      console.log(`Hesap geri yüklendikten sonra ${restoredTransactionsCount} adet işlem geri yüklendi`);
       
       // Güncellenmiş hesabı döndür
       const restoredAccount = await this.repo.findOne({ 
@@ -151,17 +165,44 @@ export class AccountsService {
   // Eski silinmiş hesapları otomatik temizle (7 günden eski)
   async cleanupOldDeletedAccounts() {
     try {
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 7);
-      
-      const result = await this.repo
-        .createQueryBuilder('account')
-        .delete()
-        .where('deletedAt IS NOT NULL AND deletedAt < :date', { date: thirtyDaysAgo })
-        .execute();
-      
-      console.log(`${result.affected} adet eski silinmiş hesap temizlendi`);
-      return result.affected || 0;
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+      // Önce silinecek hesapları bul
+      const accountsToDelete = await this.repo.find({
+        where: {
+          deletedAt: LessThan(sevenDaysAgo)
+        },
+        withDeleted: true
+      });
+
+      if (accountsToDelete.length > 0) {
+        // Her hesap için bağlı işlemleri de kalıcı sil
+        for (const account of accountsToDelete) {
+          try {
+            // Hesaba bağlı işlemleri kalıcı sil
+            await this.repo.query(
+              'DELETE FROM "transaction" WHERE ("accountId" = $1 OR "fromAccountId" = $1 OR "toAccountId" = $1) AND "deletedAt" IS NOT NULL',
+              [account.id]
+            );
+            console.log(`Hesap ${account.name} (${account.id}) için bağlı işlemler kalıcı silindi`);
+          } catch (error) {
+            console.error(`Hesap ${account.id} için işlem silme hatası:`, error);
+          }
+        }
+
+        // Sonra hesapları kalıcı sil
+        const result = await this.repo
+          .createQueryBuilder('account')
+          .delete()
+          .where('deletedAt IS NOT NULL AND deletedAt < :date', { date: sevenDaysAgo })
+          .execute();
+
+        console.log(`${result.affected} adet eski silinmiş hesap ve bağlı işlemleri kalıcı olarak temizlendi`);
+        return result.affected || 0;
+      }
+
+      return 0;
     } catch (error) {
       console.error('Eski hesapları temizleme hatası:', error);
       throw error;

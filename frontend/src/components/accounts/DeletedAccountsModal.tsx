@@ -50,7 +50,7 @@ export default function DeletedAccountsModal({ isOpen, onClose, onRestore }: Pro
     const account = deletedAccounts.find(acc => acc.id === id);
     const accountName = account?.name || 'Hesap';
     
-    if (!confirm(`${accountName} hesabını geri yüklemek istediğinizden emin misiniz?`)) {
+    if (!confirm(`${accountName} hesabını geri yüklemek istediğinizden emin misiniz?\n\n✅ Hesap ve tüm işlemleri geri yüklenecek.\n📊 İşlem geçmişi korunacak.`)) {
       return;
     }
 
