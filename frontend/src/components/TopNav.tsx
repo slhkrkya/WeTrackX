@@ -11,7 +11,6 @@ const NAV: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Kategoriler', href: '/categories' },
   { label: 'İşlemler', href: '/transactions' },
-  { label: 'Yeni İşlem', href: '/transactions/new' },
 ];
 
 export default function TopNav() {
@@ -140,21 +139,7 @@ export default function TopNav() {
                 className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                 onClick={() => setProfileDropdownOpen(false)}
               >
-                Profil Bilgileri
-              </Link>
-              <Link
-                href="/profile/edit"
-                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={() => setProfileDropdownOpen(false)}
-              >
-                Profil Düzenle
-              </Link>
-              <Link
-                href="/profile/change-password"
-                className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                onClick={() => setProfileDropdownOpen(false)}
-              >
-                Şifre Değiştir
+                Profil Yönetimi
               </Link>
               <hr className="my-1 border-gray-200 dark:border-gray-700" />
               <button

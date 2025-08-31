@@ -100,7 +100,7 @@ export class ReportsService {
     // Önce işlem bazlı kategori toplamlarını al
     const qb = this.txRepo.createQueryBuilder('t')
       .leftJoin('t.category', 'c')
-      .select(['c.id AS category_id', 'c.name AS category_name', 'c.color AS category_color'])
+      .select(['c.id AS category_id', 'c.name AS category_name', 'c.color AS category_color', 'c.priority AS category_priority'])
       .addSelect(`
         SUM(CAST(t.amount AS NUMERIC))
       `, 'total')
@@ -114,9 +114,16 @@ export class ReportsService {
       .groupBy('c.id')
       .addGroupBy('c.name')
       .addGroupBy('c.color')
-      .orderBy('total', 'DESC');
+      .addGroupBy('c.priority');
 
-    const rows = await qb.getRawMany<{ category_id: string; category_name: string; category_color: string; total: string }>();
+    // Gider kategorileri için mutlak değere göre sırala, gelir kategorileri için normal sırala
+    if (kind === 'EXPENSE') {
+      qb.orderBy('ABS(SUM(CAST(t.amount AS NUMERIC)))', 'DESC'); // Mutlak değere göre sıralama
+    } else {
+      qb.orderBy('total', 'DESC'); // Normal sıralama
+    }
+
+    const rows = await qb.getRawMany<{ category_id: string; category_name: string; category_color: string; category_priority: number; total: string }>();
     
     // Eğer işlem varsa, sadece onları döndür
     if (rows.length > 0) {
@@ -124,6 +131,7 @@ export class ReportsService {
         categoryId: r.category_id,
         name: r.category_name,
         color: r.category_color,
+        priority: r.category_priority,
         total: r.total,
       }));
     }
@@ -131,13 +139,14 @@ export class ReportsService {
     // İşlem yoksa, sistem kategorilerini göster (0 toplamla)
     const systemCategories = await this.catRepo.find({
       where: { isSystem: true, kind },
-      order: { priority: 'DESC' }
+      order: { priority: 'ASC' } // Sistem kategorileri önceliğe göre (1-10)
     });
     
     return systemCategories.map(cat => ({
       categoryId: cat.id,
       name: cat.name,
       color: cat.color,
+      priority: cat.priority,
       total: '0', // İşlem yok, toplam 0
     }));
   }

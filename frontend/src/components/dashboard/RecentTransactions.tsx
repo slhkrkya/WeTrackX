@@ -2,9 +2,16 @@
 
 import { useRouter } from 'next/navigation';
 import { type TxItem } from '@/lib/reports';
+import { type AccountDTO } from '@/lib/accounts';
+import { type BalanceItem } from '@/lib/reports';
 import { fmtMoney, fmtDate } from '@/lib/format';
 
-type Props = { items: TxItem[] };
+type Props = { 
+  items: TxItem[];
+  selectedAccountId?: string;
+  accounts?: AccountDTO[];
+  balances?: BalanceItem[];
+};
 
 const KIND_LABELS_TR: Record<TxItem['type'], string> = {
   INCOME: 'Gelir',
@@ -49,8 +56,20 @@ function TypePill({ type }: { type: TxItem['type'] }) {
   );
 }
 
-export default function RecentTransactions({ items }: Props) {
+export default function RecentTransactions({ items, selectedAccountId, accounts, balances }: Props) {
   const router = useRouter();
+
+  // Seçilen hesap bilgilerini al
+  const selectedAccount = selectedAccountId && selectedAccountId !== 'all' 
+    ? accounts?.find(a => a.id === selectedAccountId) 
+    : null;
+  
+  const selectedBalance = selectedAccountId && selectedAccountId !== 'all'
+    ? balances?.find(b => b.accountId === selectedAccountId)
+    : null;
+
+  // Toplam bakiye (tüm hesaplar için)
+  const totalBalance = balances?.reduce((sum, balance) => sum + Number(balance.balance), 0) || 0;
 
   if (!items?.length) {
     return (
@@ -62,8 +81,18 @@ export default function RecentTransactions({ items }: Props) {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </div>
-            <p className="text-sm font-medium">Henüz işlem yok.</p>
-            <p className="text-xs text-gray-400 mt-1">İşlem yaptığınızda burada görünecek</p>
+            <p className="text-sm font-medium">
+              {selectedAccount 
+                ? `${selectedAccount.name} hesabında henüz işlem yok.`
+                : 'Henüz işlem yok.'
+              }
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              {selectedAccount 
+                ? 'Bu hesapta işlem yaptığınızda burada görünecek'
+                : 'İşlem yaptığınızda burada görünecek'
+              }
+            </p>
           </div>
         </div>
       </div>
@@ -76,12 +105,52 @@ export default function RecentTransactions({ items }: Props) {
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
           <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           Son İşlemler
         </h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">Son finansal aktiviteleriniz</p>
       </div>
+
+      {/* Hesap Özeti (Seçilen hesap için) */}
+      {selectedAccount && selectedBalance && (
+        <div className="mb-6 p-6 bg-gradient-to-r from-blue-50/80 to-purple-50/80 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 dark:border-blue-800/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-bold text-gray-900 dark:text-white text-lg">{selectedAccount.name}</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Seçili hesap</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {fmtMoney(Number(selectedBalance.balance), selectedBalance.currency)}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                Mevcut bakiye
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tüm Hesaplar Özeti */}
+      {(!selectedAccountId || selectedAccountId === 'all') && (
+        <div className="mb-6 p-6 bg-gradient-to-r from-green-50/80 to-blue-50/80 dark:from-green-900/20 dark:to-blue-900/20 backdrop-blur-sm rounded-2xl border border-green-100/50 dark:border-green-800/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h4 className="font-bold text-gray-900 dark:text-white text-lg">Tüm Hesaplar</h4>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Toplam bakiye</p>
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                {fmtMoney(totalBalance, 'TRY')}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                {balances?.length || 0} hesap
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* İşlemler Listesi */}
       <div className="space-y-4">

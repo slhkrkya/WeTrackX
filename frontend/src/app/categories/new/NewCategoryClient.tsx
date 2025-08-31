@@ -26,7 +26,7 @@ export default function NewCategoryClient() {
   const [name, setName] = useState('');
   const [kind, setKind] = useState<CategoryKind>(initialKind);
   const [color, setColor] = useState<string>(''); // opsiyonel; boş bırakılabilir
-  const [priority, setPriority] = useState<number>(0);
+  const [priority, setPriority] = useState<number>(5);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string>('');
 
@@ -70,8 +70,8 @@ export default function NewCategoryClient() {
     }
 
     // Öncelik kontrolü
-    if (priority < -100 || priority > 100) {
-      setPriorityErr('Öncelik -100 ile 100 arasında olmalı');
+    if (priority < 1 || priority > 10) {
+      setPriorityErr('Öncelik 1 ile 10 arasında olmalı');
       ok = false;
     } else {
       setPriorityErr('');
@@ -187,19 +187,19 @@ export default function NewCategoryClient() {
             value={priority}
             onChange={(e) => setPriority(Number(e.target.value))}
             onBlur={() => {
-              if (priority < -100 || priority > 100) setPriorityErr('Öncelik -100 ile 100 arasında olmalı');
+              if (priority < 1 || priority > 10) setPriorityErr('Öncelik 1 ile 10 arasında olmalı');
               else setPriorityErr('');
             }}
-            placeholder="0"
-            min="-100"
-            max="100"
+            placeholder="5"
+            min="1"
+            max="10"
             aria-invalid={!!priorityErr}
             aria-describedby={priorityErr ? 'priority-err' : 'priority-help'}
           />
           {priorityErr ? (
             <p id="priority-err" className="text-xs text-red-600 dark:text-red-400">{priorityErr}</p>
           ) : (
-            <p id="priority-help" className="text-xs text-gray-500 dark:text-gray-400">Yüksek sayı = yüksek öncelik. -100 ile 100 arası.</p>
+            <p id="priority-help" className="text-xs text-gray-500 dark:text-gray-400">1 = En yüksek öncelik, 10 = En düşük öncelik. 1-10 arası.</p>
           )}
         </div>
 

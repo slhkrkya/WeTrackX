@@ -54,16 +54,18 @@ function LoadingSkeleton() {
   const rows = Array.from({ length: 6 });
   return (
     <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="hidden md:grid grid-cols-4 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
+      <div className="hidden md:grid grid-cols-5 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
         <div>Ad</div>
         <div>Tür</div>
+        <div>Öncelik</div>
         <div>Renk</div>
         <div className="text-right">İşlemler</div>
       </div>
       <ul className="divide-y divide-gray-100 dark:divide-gray-700">
         {rows.map((_, i) => (
-          <li key={i} className="grid md:grid-cols-4 grid-cols-2 gap-4 px-6 py-4">
+          <li key={i} className="grid md:grid-cols-5 grid-cols-2 gap-4 px-6 py-4">
             <div className="col-span-2 md:col-span-1 h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
             <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
             <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
             <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
@@ -100,7 +102,10 @@ export default function CategoriesClient() {
         setErr('');
         const data = await CategoriesAPI.list(kind);
         if (!alive) return;
-        setItems(data);
+        
+        // Kategorileri önceliğe göre sırala (1 en yüksek öncelik)
+        const sortedData = data.sort((a, b) => a.priority - b.priority);
+        setItems(sortedData);
       } catch (e: unknown) {
         if (!alive) return;
         setErr(e instanceof Error ? e.message : String(e));
@@ -164,6 +169,20 @@ export default function CategoriesClient() {
     [kind]
   );
 
+  // Öncelik rengini belirle
+  const getPriorityColor = (priority: number) => {
+    if (priority <= 3) return 'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800';
+    if (priority <= 6) return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-800';
+    return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800';
+  };
+
+  // Öncelik etiketini belirle
+  const getPriorityLabel = (priority: number) => {
+    if (priority <= 3) return 'Yüksek';
+    if (priority <= 6) return 'Orta';
+    return 'Düşük';
+  };
+
   return (
     <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Başlık + Aksiyonlar */}
@@ -208,9 +227,10 @@ export default function CategoriesClient() {
       ) : (
         <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden" role="table" aria-label="Kategori listesi">
           {/* Başlık (md+) */}
-          <div className="hidden md:grid grid-cols-4 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50" role="rowgroup">
+          <div className="hidden md:grid grid-cols-5 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50" role="rowgroup">
             <div role="columnheader">Ad</div>
             <div role="columnheader">Tür</div>
+            <div role="columnheader">Öncelik</div>
             <div role="columnheader">Renk</div>
             <div role="columnheader" className="text-right">İşlemler</div>
           </div>
@@ -243,7 +263,7 @@ export default function CategoriesClient() {
                   key={c.id}
                   role="row"
                   className={[
-                    'grid md:grid-cols-4 grid-cols-2 gap-4 px-6 py-4 text-sm',
+                    'grid md:grid-cols-5 grid-cols-2 gap-4 px-6 py-4 text-sm',
                     'hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200',
                     'focus-within:bg-gray-50 dark:focus-within:bg-gray-700/50',
                   ].join(' ')}
@@ -275,6 +295,24 @@ export default function CategoriesClient() {
                     </span>
                   </div>
 
+                  {/* Öncelik */}
+                  <div role="cell" className="order-4 md:order-none">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border',
+                          getPriorityColor(c.priority),
+                        ].join(' ')}
+                        title={`Öncelik: ${c.priority} (${getPriorityLabel(c.priority)})`}
+                      >
+                        {c.priority}
+                      </span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {getPriorityLabel(c.priority)}
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Renk */}
                   <div role="cell" className="flex items-center gap-3 order-2 md:order-none">
                     {c.color ? (
@@ -293,7 +331,7 @@ export default function CategoriesClient() {
                   </div>
 
                   {/* İşlemler */}
-                  <div role="cell" className="flex items-center justify-end gap-2 order-4 md:order-none">
+                  <div role="cell" className="flex items-center justify-end gap-2 order-5 md:order-none">
                     <div className="flex items-center gap-1">
                       <Link
                         href={`/categories/${c.id}/edit`}

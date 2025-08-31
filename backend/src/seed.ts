@@ -12,30 +12,30 @@ async function run() {
 
   // Sistem kategorilerini oluştur
   const systemIncomeCategories = [
-    { name: 'Maaş', priority: 10, color: '#10b981' },
-    { name: 'Ek Gelir', priority: 9, color: '#059669' },
-    { name: 'Yatırım Geliri', priority: 8, color: '#047857' },
-    { name: 'Kira Geliri', priority: 7, color: '#065f46' },
-    { name: 'Faiz Geliri', priority: 6, color: '#064e3b' },
-    { name: 'Hediye', priority: 5, color: '#134e4a' },
-    { name: 'İkramiye', priority: 4, color: '#16463d' },
-    { name: 'Komisyon', priority: 3, color: '#14532d' },
-    { name: 'Diğer Gelir', priority: 2, color: '#166534' },
+    { name: 'Maaş', priority: 1, color: '#22C55E' },           // En yüksek öncelik - Parlak yeşil
+    { name: 'Ek Gelir', priority: 2, color: '#16A34A' },       // Yüksek öncelik - Koyu yeşil
+    { name: 'Yatırım Geliri', priority: 3, color: '#15803D' }, // Yüksek öncelik - Orman yeşili
+    { name: 'Kira Geliri', priority: 4, color: '#166534' },    // Orta öncelik - Koyu orman yeşili
+    { name: 'Faiz Geliri', priority: 5, color: '#14532D' },   // Orta öncelik - Çok koyu yeşil
+    { name: 'İkramiye', priority: 6, color: '#059669' },      // Orta öncelik - Teal yeşili
+    { name: 'Komisyon', priority: 7, color: '#047857' },      // Düşük öncelik - Koyu teal
+    { name: 'Hediye', priority: 8, color: '#065F46' },        // Düşük öncelik - Çok koyu teal
+    { name: 'Diğer Gelir', priority: 9, color: '#064E3B' },   // En düşük öncelik - En koyu teal
   ];
 
   const systemExpenseCategories = [
-    { name: 'Market', priority: 10, color: '#ef4444' },
-    { name: 'Ulaşım', priority: 9, color: '#dc2626' },
-    { name: 'Faturalar', priority: 8, color: '#b91c1c' },
-    { name: 'Eğlence', priority: 7, color: '#991b1b' },
-    { name: 'Sağlık', priority: 6, color: '#7f1d1d' },
-    { name: 'Eğitim', priority: 5, color: '#450a0a' },
-    { name: 'Giyim', priority: 4, color: '#dc2626' },
-    { name: 'Ev & Mobilya', priority: 3, color: '#b91c1c' },
-    { name: 'Teknoloji', priority: 2, color: '#991b1b' },
-    { name: 'Spor & Hobi', priority: 1, color: '#7f1d1d' },
-    { name: 'Seyahat', priority: 0, color: '#450a0a' },
-    { name: 'Diğer Gider', priority: -1, color: '#dc2626' },
+    { name: 'Market', priority: 1, color: '#EF4444' },        // En yüksek öncelik - Parlak kırmızı
+    { name: 'Faturalar', priority: 2, color: '#DC2626' },     // Yüksek öncelik - Koyu kırmızı
+    { name: 'Sağlık', priority: 3, color: '#B91C1C' },        // Yüksek öncelik - Çok koyu kırmızı
+    { name: 'Ulaşım', priority: 4, color: '#991B1B' },        // Orta öncelik - Koyu bordo
+    { name: 'Eğitim', priority: 5, color: '#7F1D1D' },        // Orta öncelik - Çok koyu bordo
+    { name: 'Giyim', priority: 6, color: '#DC2626' },         // Orta öncelik - Koyu kırmızı
+    { name: 'Ev & Mobilya', priority: 7, color: '#B91C1C' }, // Düşük öncelik - Çok koyu kırmızı
+    { name: 'Eğlence', priority: 8, color: '#991B1B' },       // Düşük öncelik - Koyu bordo
+    { name: 'Teknoloji', priority: 9, color: '#7F1D1D' },    // Düşük öncelik - Çok koyu bordo
+    { name: 'Spor & Hobi', priority: 10, color: '#450A0A' },  // En düşük öncelik - En koyu bordo
+    { name: 'Seyahat', priority: 10, color: '#450A0A' },      // En düşük öncelik - En koyu bordo
+    { name: 'Diğer Gider', priority: 10, color: '#DC2626' },  // En düşük öncelik - Koyu kırmızı
   ];
 
   // Sistem gelir kategorilerini oluştur
@@ -52,9 +52,13 @@ async function run() {
         isSystem: true,
       });
       await catRepo.save(existingCat);
-      console.log(`Sistem kategorisi oluşturuldu: ${cat.name} (Gelir)`);
+      console.log(`Sistem kategorisi oluşturuldu: ${cat.name} (Gelir) - Öncelik: ${cat.priority} - Renk: ${cat.color}`);
     } else {
-      console.log(`Sistem kategorisi zaten var: ${cat.name} (Gelir)`);
+      // Mevcut kategoriyi güncelle
+      existingCat.priority = cat.priority;
+      existingCat.color = cat.color;
+      await catRepo.save(existingCat);
+      console.log(`Sistem kategorisi güncellendi: ${cat.name} (Gelir) - Öncelik: ${cat.priority} - Renk: ${cat.color}`);
     }
   }
 
@@ -72,9 +76,13 @@ async function run() {
         isSystem: true,
       });
       await catRepo.save(existingCat);
-      console.log(`Sistem kategorisi oluşturuldu: ${cat.name} (Gider)`);
+      console.log(`Sistem kategorisi oluşturuldu: ${cat.name} (Gider) - Öncelik: ${cat.priority} - Renk: ${cat.color}`);
     } else {
-      console.log(`Sistem kategorisi zaten var: ${cat.name} (Gider)`);
+      // Mevcut kategoriyi güncelle
+      existingCat.priority = cat.priority;
+      existingCat.color = cat.color;
+      await catRepo.save(existingCat);
+      console.log(`Sistem kategorisi güncellendi: ${cat.name} (Gider) - Öncelik: ${cat.priority} - Renk: ${cat.color}`);
     }
   }
 

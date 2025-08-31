@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import MonthlySeriesChart from '@/components/dashboard/MonthlySeriesChart';
 import CategoryTotals from '@/components/dashboard/CategoryTotals';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
+import AccountSelector from '@/components/dashboard/AccountSelector';
 import {
   ReportsAPI,
   type BalanceItem,
@@ -25,18 +26,21 @@ export default function DashboardPage() {
   const [catIncome, setCatIncome] = useState<CategoryTotal[]>([]);
   const [catExpense, setCatExpense] = useState<CategoryTotal[]>([]);
   const [recent, setRecent] = useState<TxItem[]>([]);
+  const [allTransactions, setAllTransactions] = useState<TxItem[]>([]); // Tüm işlemler için ayrı state
   const [cashflow, setCashflow] = useState<Cashflow | null>(null);
   const [accounts, setAccounts] = useState<AccountDTO[]>([]);
+  
+  // Hesap seçimi state'i
+  const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
 
   useEffect(() => {
     (async () => {
       try {
-        const [b, a, ci, ce, r, cf] = await Promise.all([
+        const [b, a, ci, ce, cf] = await Promise.all([
           ReportsAPI.balances(),
           AccountsAPI.list(),
           ReportsAPI.categoryTotals('INCOME'),
           ReportsAPI.categoryTotals('EXPENSE'),
-          ReportsAPI.recentTransactions(10),
           ReportsAPI.cashflow(),
         ]);
         
@@ -44,8 +48,13 @@ export default function DashboardPage() {
         setAccounts(a);
         setCatIncome(ci);
         setCatExpense(ce);
-        setRecent(r.items);
         setCashflow(cf);
+        
+        // İşlemleri hesap seçimi durumuna göre yükle
+        const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
+        const recentData = await ReportsAPI.recentTransactions(5, accountIdParam);
+        setAllTransactions(recentData.items);
+        setRecent(recentData.items);
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
         router.replace('/auth/login');
@@ -53,7 +62,23 @@ export default function DashboardPage() {
         setLoading(false);
       }
     })();
-  }, [router]);
+  }, [router, selectedAccountId]);
+
+  // Hesap seçimi değiştiğinde işlemleri yenile
+  useEffect(() => {
+    (async () => {
+      try {
+        // Hesap seçimi varsa accountId parametresi ekle
+        const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
+        
+        const recentData = await ReportsAPI.recentTransactions(5, accountIdParam);
+        setAllTransactions(recentData.items);
+        setRecent(recentData.items);
+      } catch (e) {
+        console.error('İşlemler yenilenirken hata:', e);
+      }
+    })();
+  }, [selectedAccountId]);
 
   if (loading) {
     return (
@@ -98,8 +123,8 @@ export default function DashboardPage() {
 
       {/* Hata */}
       {err && (
-        <div className="reveal bg-red-50/80 dark:bg-red-900/20 backdrop-blur-sm rounded-2xl border border-red-200/50 dark:border-red-800/30 p-4">
-          <p className="text-sm text-red-600 dark:text-red-400">
+        <div className="reveal bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
+          <p className="text-red-600 dark:text-red-400 text-sm">
             {err}
           </p>
         </div>
@@ -122,10 +147,12 @@ export default function DashboardPage() {
             setAccounts(accounts.filter(item => item.id !== id));
             // Son işlemleri de yenile
             try {
+              const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
               const [recentData, balancesData] = await Promise.all([
-                ReportsAPI.recentTransactions(10),
+                ReportsAPI.recentTransactions(5, accountIdParam),
                 ReportsAPI.balances(),
               ]);
+              setAllTransactions(recentData.items);
               setRecent(recentData.items);
               setBalances(balancesData);
             } catch (e: unknown) {
@@ -135,13 +162,15 @@ export default function DashboardPage() {
           onRestore={async (id) => {
             // Hesap geri yüklendiğinde listeyi yenile
             try {
+              const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
               const [accountsData, balancesData, recentData] = await Promise.all([
                 AccountsAPI.list(),
                 ReportsAPI.balances(),
-                ReportsAPI.recentTransactions(10),
+                ReportsAPI.recentTransactions(5, accountIdParam),
               ]);
               setAccounts(accountsData);
               setBalances(balancesData);
+              setAllTransactions(recentData.items);
               setRecent(recentData.items);
             } catch (e: unknown) {
               console.error('Hesap listesi yenilenirken hata:', e);
@@ -193,9 +222,24 @@ export default function DashboardPage() {
         </section>
       )}
 
+      {/* Hesap Seçimi */}
+      <section className="reveal">
+        <AccountSelector 
+          accounts={accounts}
+          balances={balances}
+          selectedAccountId={selectedAccountId}
+          onSelectAccount={setSelectedAccountId}
+        />
+      </section>
+
       {/* Son İşlemler */}
       <section className="reveal">
-        <RecentTransactions items={recent} />
+        <RecentTransactions 
+          items={recent} 
+          selectedAccountId={selectedAccountId}
+          accounts={accounts}
+          balances={balances}
+        />
       </section>
     </main>
   );

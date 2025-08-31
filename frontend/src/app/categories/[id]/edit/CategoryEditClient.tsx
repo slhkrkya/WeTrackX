@@ -279,9 +279,10 @@ export default function CategoryEditClient({ id }: Props) {
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={formData.priority}
               onChange={(e) => setFormData(prev => ({ ...prev, priority: Number(e.target.value) }))}
-              min="0"
-              max="100"
+              min="1"
+              max="10"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400">1 = En yüksek öncelik, 10 = En düşük öncelik</p>
           </div>
         </div>
 
