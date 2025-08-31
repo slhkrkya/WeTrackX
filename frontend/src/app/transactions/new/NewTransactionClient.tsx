@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
 import { CategoriesAPI, type CategoryDTO } from '@/lib/categories';
 import { TransactionsAPI } from '@/lib/transactions';
+import DatePicker from '@/components/ui/DatePicker';
 
 type Kind = 'INCOME' | 'EXPENSE' | 'TRANSFER';
 
@@ -172,7 +173,7 @@ export default function NewTransactionClient() {
         await TransactionsAPI.create({
           type,
           title: title.trim(),
-          amount: n, // INCOME/EXPENSE için pozitif (backend otomatik negatif yapar)
+          amount: n, // Backend otomatik olarak EXPENSE için negatif yapar
           currency: 'TRY',
           date: new Date(date).toISOString(),
           description: description || undefined,
@@ -322,22 +323,23 @@ export default function NewTransactionClient() {
               aria-describedby={amountErr ? 'amount-err' : undefined}
             />
             {amountErr && <p id="amount-err" className="text-xs text-red-600 dark:text-red-400">{amountErr}</p>}
+            {type === 'EXPENSE' && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                💡 Gider tutarları sistem tarafından otomatik olarak negatif değere çevrilir
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="date" className="text-sm font-medium text-gray-700 dark:text-gray-300">Tarih</label>
-            <input
-              id="date"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-              type="datetime-local"
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tarih</label>
+            <DatePicker
               value={date}
-              onChange={(e) => setDate(e.target.value)}
-              onBlur={() => setDateErr(date ? '' : 'Tarih zorunlu')}
-              required
-              aria-invalid={!!dateErr}
-              aria-describedby={dateErr ? 'date-err' : undefined}
+              onChange={setDate}
+              type="datetime-local"
+              placeholder="Tarih ve saat seçin"
+              showTime={true}
             />
-            {dateErr && <p id="date-err" className="text-xs text-red-600 dark:text-red-400">{dateErr}</p>}
+            {dateErr && <p className="text-xs text-red-600 dark:text-red-400">{dateErr}</p>}
           </div>
         </div>
 

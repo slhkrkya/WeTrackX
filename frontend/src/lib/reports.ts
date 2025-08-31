@@ -8,6 +8,7 @@ export type MonthlyPoint = { month: string; income: string; expense: string };
 export type TxItem = {
   id: string;
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER';
+  title: string;
   amount: string;
   currency: string;
   date: string;

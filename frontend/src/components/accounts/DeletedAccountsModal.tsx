@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { type AccountDTO } from '@/lib/accounts';
 import { AccountsAPI } from '@/lib/accounts';
 import { ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
@@ -27,24 +27,24 @@ export default function DeletedAccountsModal({ isOpen, onClose, onRestore }: Pro
   const { show } = useToast();
 
   // Silinmiş hesapları yükle
-  useEffect(() => {
-    if (isOpen) {
-      loadDeletedAccounts();
-    }
-  }, [isOpen]);
-
-  async function loadDeletedAccounts() {
+  const loadDeletedAccounts = useCallback(async () => {
     try {
       setLoading(true);
       const accounts = await AccountsAPI.listDeleted();
       setDeletedAccounts(accounts);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Silinmiş hesaplar yüklenirken hata:', error);
       show('Silinmiş hesaplar yüklenirken hata oluştu', 'error');
     } finally {
       setLoading(false);
     }
-  }
+  }, [show]);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadDeletedAccounts();
+    }
+  }, [isOpen, loadDeletedAccounts]);
 
   async function handleRestore(id: string) {
     const account = deletedAccounts.find(acc => acc.id === id);
@@ -70,18 +70,20 @@ export default function DeletedAccountsModal({ isOpen, onClose, onRestore }: Pro
       onRestore(id);
       
       show(`${accountName} hesabı başarıyla geri yüklendi`, 'success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Hesap geri yükleme hatası:', error);
       let message = 'Hesap geri yüklenirken hata oluştu';
       
-      if (error?.message?.includes('not found') || error?.message?.includes('bulunamadı')) {
-        message = 'Hesap bulunamadı. Sayfayı yenileyip tekrar deneyin.';
-      } else if (error?.message?.includes('not deleted') || error?.message?.includes('aktif durumda')) {
-        message = 'Bu hesap zaten aktif durumda.';
-      } else if (error?.message?.includes('beklenmeyen bir hata')) {
-        message = 'Hesap geri yüklenirken teknik bir hata oluştu. Lütfen tekrar deneyin.';
-      } else if (error?.message) {
-        message = error.message;
+      if (error instanceof Error) {
+        if (error.message.includes('not found') || error.message.includes('bulunamadı')) {
+          message = 'Hesap bulunamadı. Sayfayı yenileyip tekrar deneyin.';
+        } else if (error.message.includes('not deleted') || error.message.includes('aktif durumda')) {
+          message = 'Bu hesap zaten aktif durumda.';
+        } else if (error.message.includes('beklenmeyen bir hata')) {
+          message = 'Hesap geri yüklenirken teknik bir hata oluştu. Lütfen tekrar deneyin.';
+        } else {
+          message = error.message;
+        }
       }
       
       show(message, 'error');

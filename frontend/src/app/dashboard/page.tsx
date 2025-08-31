@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import MonthlySeriesChart from '@/components/dashboard/MonthlySeriesChart';
 import CategoryTotals from '@/components/dashboard/CategoryTotals';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
-import AccountSelector from '@/components/dashboard/AccountSelector';
 import {
   ReportsAPI,
   type BalanceItem,
@@ -16,6 +15,7 @@ import {
 import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
 import { fmtMoney } from '@/lib/format';
 import AccountCards from '@/components/accounts/AccountCards';
+import SuspenseFallback from '@/components/SuspenseFallback';
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -26,7 +26,7 @@ export default function DashboardPage() {
   const [catIncome, setCatIncome] = useState<CategoryTotal[]>([]);
   const [catExpense, setCatExpense] = useState<CategoryTotal[]>([]);
   const [recent, setRecent] = useState<TxItem[]>([]);
-  const [allTransactions, setAllTransactions] = useState<TxItem[]>([]); // Tüm işlemler için ayrı state
+  // const [allTransactions, setAllTransactions] = useState<TxItem[]>([]); // Tüm işlemler için ayrı state
   const [cashflow, setCashflow] = useState<Cashflow | null>(null);
   const [accounts, setAccounts] = useState<AccountDTO[]>([]);
   
@@ -53,7 +53,7 @@ export default function DashboardPage() {
         // İşlemleri hesap seçimi durumuna göre yükle
         const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
         const recentData = await ReportsAPI.recentTransactions(5, accountIdParam);
-        setAllTransactions(recentData.items);
+        // setAllTransactions(recentData.items);
         setRecent(recentData.items);
       } catch (e) {
         setErr(e instanceof Error ? e.message : String(e));
@@ -72,7 +72,7 @@ export default function DashboardPage() {
         const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
         
         const recentData = await ReportsAPI.recentTransactions(5, accountIdParam);
-        setAllTransactions(recentData.items);
+        // setAllTransactions(recentData.items);
         setRecent(recentData.items);
       } catch (e) {
         console.error('İşlemler yenilenirken hata:', e);
@@ -81,27 +81,7 @@ export default function DashboardPage() {
   }, [selectedAccountId]);
 
   if (loading) {
-    return (
-      <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Dashboard
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Finansal durumunuzun genel görünümü
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center justify-center h-48">
-          <div className="text-center">
-            <div className="w-8 h-8 mx-auto mb-2 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
-            <p className="text-sm text-gray-500">Yükleniyor...</p>
-          </div>
-        </div>
-      </main>
-    );
+    return <SuspenseFallback message="Dashboard yükleniyor..." fullScreen />;
   }
 
   // Para birimini balances'tan türet (yoksa TRY)
@@ -152,14 +132,14 @@ export default function DashboardPage() {
                 ReportsAPI.recentTransactions(5, accountIdParam),
                 ReportsAPI.balances(),
               ]);
-              setAllTransactions(recentData.items);
+              // setAllTransactions(recentData.items);
               setRecent(recentData.items);
               setBalances(balancesData);
             } catch (e: unknown) {
               console.error('Son işlemler yenilenirken hata:', e);
             }
           }}
-          onRestore={async (id) => {
+          onRestore={async () => {
             // Hesap geri yüklendiğinde listeyi yenile
             try {
               const accountIdParam = selectedAccountId && selectedAccountId !== 'all' ? selectedAccountId : undefined;
@@ -170,7 +150,7 @@ export default function DashboardPage() {
               ]);
               setAccounts(accountsData);
               setBalances(balancesData);
-              setAllTransactions(recentData.items);
+              // setAllTransactions(recentData.items);
               setRecent(recentData.items);
             } catch (e: unknown) {
               console.error('Hesap listesi yenilenirken hata:', e);
@@ -222,16 +202,6 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Hesap Seçimi */}
-      <section className="reveal">
-        <AccountSelector 
-          accounts={accounts}
-          balances={balances}
-          selectedAccountId={selectedAccountId}
-          onSelectAccount={setSelectedAccountId}
-        />
-      </section>
-
       {/* Son İşlemler */}
       <section className="reveal">
         <RecentTransactions 
@@ -239,6 +209,7 @@ export default function DashboardPage() {
           selectedAccountId={selectedAccountId}
           accounts={accounts}
           balances={balances}
+          onSelectAccount={setSelectedAccountId}
         />
       </section>
     </main>

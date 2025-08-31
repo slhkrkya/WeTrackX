@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CategoriesAPI } from '@/lib/categories';
 import { type CategoryKind, CATEGORY_KIND_LABELS_TR } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
+import ColorPicker from '@/components/ui/ColorPicker';
 
 const KINDS: CategoryKind[] = ['INCOME', 'EXPENSE'];
 
@@ -32,7 +33,6 @@ export default function NewCategoryClient() {
 
   // Alan bazlı hatalar
   const [nameErr, setNameErr] = useState('');
-  const [colorErr, setColorErr] = useState('');
   const [priorityErr, setPriorityErr] = useState('');
 
   // Panel başlığına küçük renk vurgusu
@@ -59,14 +59,9 @@ export default function NewCategoryClient() {
 
     if (color.trim()) {
       if (!isValidHexColor(color)) {
-        setColorErr('Geçerli bir HEX renk girin (örn: #22C55E veya #2C3)');
+        // ColorPicker komponenti kendi validation'ını yapıyor
         ok = false;
-      } else {
-        setColorErr('');
       }
-    } else {
-      // boş bırakılabilir
-      setColorErr('');
     }
 
     // Öncelik kontrolü
@@ -205,56 +200,13 @@ export default function NewCategoryClient() {
 
         {/* Renk (opsiyonel) */}
         <div className="space-y-2">
-          <label htmlFor="color-text" className="text-sm font-medium text-gray-700 dark:text-gray-300">Renk (opsiyonel)</label>
-          <div className="flex items-center gap-3">
-            {/* Renk seçici */}
-            <input
-              aria-label="Renk seçici"
-              className={[
-                'h-10 w-16 p-0 rounded-lg',
-                'ring-1 ring-gray-200 dark:ring-gray-600 bg-white dark:bg-gray-700',
-                'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-              ].join(' ')}
-              type="color"
-              value={color || defaultHexForKind(kind)}
-              onChange={(e) => setColor(e.target.value)}
-              title="Renk seç"
-            />
-            {/* Hex text input */}
-            <input
-              id="color-text"
-              className="flex-1 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 font-mono uppercase"
-              value={color}
-              onChange={(e) => setColor(e.target.value)}
-              onBlur={() => {
-                const v = color.trim();
-                if (!v) { setColor(''); setColorErr(''); return; }
-                if (!isValidHexColor(v)) setColorErr('Geçerli bir HEX renk girin (örn: #22C55E veya #2C3)');
-                else {
-                  // normalize: büyük harf
-                  setColor(v.toUpperCase());
-                  setColorErr('');
-                }
-              }}
-              placeholder="#22C55E"
-              aria-invalid={!!colorErr}
-              aria-describedby={colorErr ? 'color-err' : 'color-help'}
-            />
-          </div>
-
-          {/* Canlı önizleme satırı */}
-          <div className="flex items-center gap-3">
-            <span
-              className="inline-block h-4 w-4 rounded-full border-2 border-gray-200 dark:border-gray-600 shadow-sm"
-              style={{ background: color || defaultHexForKind(kind) }}
-              aria-hidden="true"
-            />
-            {colorErr ? (
-              <p id="color-err" className="text-xs text-red-600 dark:text-red-400">{colorErr}</p>
-            ) : (
-              <p id="color-help" className="text-xs text-gray-500 dark:text-gray-400">Renk belirtmek zorunlu değil.</p>
-            )}
-          </div>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Renk (opsiyonel)</label>
+          <ColorPicker
+            value={color}
+            onChange={setColor}
+            placeholder="#22C55E"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400">Renk belirtmek zorunlu değil.</p>
         </div>
 
         {/* Aksiyonlar */}

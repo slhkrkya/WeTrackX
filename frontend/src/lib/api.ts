@@ -71,7 +71,7 @@ export async function api<T = unknown>(
   if (contentType && contentType.includes('application/json')) {
     try {
       return await res.json() as Promise<T>;
-    } catch (error) {
+    } catch {
       // JSON parse hatası durumunda boş response olarak kabul et
       return {} as T;
     }

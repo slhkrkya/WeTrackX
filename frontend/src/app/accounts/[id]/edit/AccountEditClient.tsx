@@ -115,8 +115,8 @@ export default function AccountEditClient({ id }: Props) {
 
       show('Hesap başarıyla güncellendi', 'success');
       router.push('/dashboard');
-    } catch (error: any) {
-      const message = error?.message || 'Hesap güncellenirken hata oluştu';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Hesap güncellenirken hata oluştu';
       show(message, 'error');
       setErr(message);
     } finally {
@@ -154,7 +154,7 @@ export default function AccountEditClient({ id }: Props) {
             onClick={() => router.push('/dashboard')}
             className="px-6 py-3 rounded-xl font-medium bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 transition-all duration-200"
           >
-            Dashboard'a Dön
+            Dashboard&apos;a Dön
           </button>
         </div>
       </main>
@@ -182,7 +182,7 @@ export default function AccountEditClient({ id }: Props) {
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
-          Dashboard'a Dön
+          Dashboard&apos;a Dön
         </button>
       </div>
 

@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
 import { isAuthenticated } from '@/lib/auth';
 import { 
   useScrollAnimation, 
@@ -13,21 +11,10 @@ import {
   initSmoothScroll 
 } from '@/lib/animations';
 
-type Health = { status: string };
-
-function getErrorMessage(e: unknown) {
-  if (e instanceof Error) return e.message;
-  try {
-    return JSON.stringify(e);
-  } catch {
-    return String(e);
-  }
-}
-
 export default function Home() {
-  const router = useRouter();
-  const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
-  const [message, setMessage] = useState<string>('');
+  // const router = useRouter();
+  // const [status, setStatus] = useState<'loading' | 'ok' | 'error'>('loading');
+  // const [message, setMessage] = useState<string>('');
   const [isAuth, setIsAuth] = useState<boolean>(false);
 
   // Animation refs
@@ -44,16 +31,16 @@ export default function Home() {
     const authStatus = isAuthenticated();
     setIsAuth(authStatus);
 
-    (async () => {
-      try {
-        const res = await api<Health>('/health');
-        setStatus(res.status === 'ok' ? 'ok' : 'error');
-        setMessage(JSON.stringify(res));
-      } catch (e: unknown) {
-        setStatus('error');
-        setMessage(getErrorMessage(e));
-      }
-    })();
+    // (async () => {
+    //   try {
+    //     const res = await api<Health>('/health');
+    //     setStatus(res.status === 'ok' ? 'ok' : 'error');
+    //     setMessage(JSON.stringify(res));
+    //   } catch (e: unknown) {
+    //     setStatus('error');
+    //     setMessage(getErrorMessage(e));
+    //   }
+    // })();
   }, []);
 
   return (
@@ -87,7 +74,7 @@ export default function Home() {
                     href="/dashboard" 
                     className="btn btn-primary text-lg px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
                   >
-                    Dashboard'a Git
+                    Dashboard&apos;a Git
                     <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
@@ -306,7 +293,7 @@ export default function Home() {
                 href="/dashboard" 
                 className="btn btn-primary text-lg px-8 py-4 bg-white text-blue-600 hover:bg-gray-100 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
               >
-                Dashboard'a Git
+                Dashboard&apos;a Git
                 <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>

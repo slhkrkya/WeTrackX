@@ -7,6 +7,7 @@ import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
 import { CategoriesAPI, type CategoryDTO } from '@/lib/categories';
 import { useToast } from '@/components/ToastProvider';
 import { fmtDate, fmtMoney } from '@/lib/format';
+import DatePicker from '@/components/ui/DatePicker';
 
 type Props = { id: string };
 
@@ -51,11 +52,12 @@ export default function TransactionEditClient({ id }: Props) {
         setAccounts(accsData);
         setCategories(catsData.filter(c => c.kind === txData.type));
 
-        // Form verilerini doldur
+        // Form verilerini doldur - gider işlemlerinde pozitif değer göster
+        const displayAmount = txData.type === 'EXPENSE' ? Math.abs(Number(txData.amount)).toString() : txData.amount;
         setFormData({
           title: txData.title,
-          amount: txData.amount,
-          date: txData.date.split('T')[0],
+          amount: displayAmount,
+          date: txData.date.slice(0, 16), // datetime-local formatı için
           description: txData.description || '',
           accountId: txData.account?.id || '',
           categoryId: txData.category?.id || '',
@@ -84,14 +86,14 @@ export default function TransactionEditClient({ id }: Props) {
       
       await TransactionsAPI.update(id, {
         ...formData,
-        amount: Number(formData.amount),
+        amount: Number(formData.amount), // Backend otomatik olarak EXPENSE için negatif yapar
         type: transaction.type,
       });
 
       show('İşlem başarıyla güncellendi', 'success');
       router.push('/transactions');
-    } catch (error: any) {
-      const message = error?.message || 'İşlem güncellenirken hata oluştu';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'İşlem güncellenirken hata oluştu';
       show(message, 'error');
       setErr(message);
     } finally {
@@ -226,21 +228,28 @@ export default function TransactionEditClient({ id }: Props) {
             <input
               type="number"
               step="0.01"
+              min="0"
               className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               value={formData.amount}
               onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+              placeholder={transaction.type === 'EXPENSE' ? 'Gider tutarını girin (pozitif değer)' : 'Tutar girin'}
               required
             />
+            {transaction.type === 'EXPENSE' && (
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                💡 Gider tutarları sistem tarafından otomatik olarak negatif değere çevrilir
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tarih</label>
-            <input
-              type="date"
-              className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            <DatePicker
               value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              required
+              onChange={(date) => setFormData(prev => ({ ...prev, date }))}
+              type="datetime-local"
+              placeholder="Tarih ve saat seçin"
+              showTime={true}
             />
           </div>
 

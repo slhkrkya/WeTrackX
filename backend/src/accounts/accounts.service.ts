@@ -75,11 +75,9 @@ export class AccountsService {
       await this.repo.manager.transaction(async (transactionalEntityManager) => {
         // Önce hesaba bağlı tüm işlemleri soft delete yap
         const deletedTransactionsCount = await this.transactionsService.softDeleteByAccountWithManager(transactionalEntityManager, owner, id);
-        console.log(`Hesap silinmeden önce ${deletedTransactionsCount} adet işlem soft delete yapıldı`);
         
         // Sonra hesabı soft delete yap
         await transactionalEntityManager.softRemove(acc);
-        console.log(`Hesap soft delete yapıldı: ${acc.name} (${id})`);
       });
       
       return true;
@@ -129,7 +127,6 @@ export class AccountsService {
       
       // Sonra hesaba bağlı tüm işlemleri geri yükle
       const restoredTransactionsCount = await this.transactionsService.restoreByAccount(owner, id);
-      console.log(`Hesap geri yüklendikten sonra ${restoredTransactionsCount} adet işlem geri yüklendi`);
       
       // Güncellenmiş hesabı döndür
       const restoredAccount = await this.repo.findOne({ 
@@ -200,7 +197,7 @@ export class AccountsService {
             const deletedCount = deletedTransactionsResult.rowCount || 0;
             totalDeletedTransactions += deletedCount;
             
-            console.log(`Hesap ${account.name} (${account.id}) için ${deletedCount} adet silinmiş işlem kalıcı silindi`);
+
           } catch (error) {
             console.error(`Hesap ${account.id} için işlem silme hatası:`, error);
             // Hata olsa bile devam et
@@ -215,7 +212,6 @@ export class AccountsService {
           .execute();
 
         const deletedAccountsCount = result.affected || 0;
-        console.log(`${deletedAccountsCount} adet eski silinmiş hesap ve ${totalDeletedTransactions} adet bağlı işlem kalıcı olarak temizlendi`);
         return deletedAccountsCount;
       }
 
@@ -229,16 +225,10 @@ export class AccountsService {
   // Her gün gece yarısı çalışacak scheduled task
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async handleCleanupTask() {
-    console.log('🕐 Eski silinmiş hesaplar temizleniyor...');
     try {
-      const cleanedCount = await this.cleanupOldDeletedAccounts();
-      if (cleanedCount > 0) {
-        console.log(`✅ Başarıyla ${cleanedCount} adet eski hesap temizlendi`);
-      } else {
-        console.log('ℹ️ Temizlenecek eski hesap bulunamadı');
-      }
+      await this.cleanupOldDeletedAccounts();
     } catch (error) {
-      console.error('❌ Scheduled cleanup task hatası:', error);
+      console.error('Scheduled cleanup task hatası:', error);
     }
   }
 }

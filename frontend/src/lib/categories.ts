@@ -1,6 +1,14 @@
 import { api } from './api';
 import { type CategoryKind } from './types';
 
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: JsonValue }
+  | JsonValue[];
+
 export type CategoryDTO = {
   id: string;
   name: string;
@@ -20,7 +28,7 @@ export const CategoriesAPI = {
   get: (id: string) =>
     api<CategoryDTO>(`/categories/${id}`),
   update: (id: string, data: Partial<{ name: string; kind: CategoryKind; color?: string; priority?: number }>) => {
-    const payload: any = { ...data };
+    const payload = { ...data } as { [key: string]: JsonValue };
     if (data.kind) payload.type = data.kind;
     return api<CategoryDTO>(`/categories/${id}`, { method: 'PATCH', jsonBody: payload });
   },

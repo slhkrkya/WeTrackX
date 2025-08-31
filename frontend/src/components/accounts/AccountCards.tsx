@@ -94,7 +94,12 @@ function SortableAccountCard({
   deletingId 
 }: {
   account: AccountDTO;
-  styles: any;
+  styles: {
+    gradient: string;
+    pattern: string;
+    decoration: string;
+    icon: React.ReactNode;
+  };
   isWallet: boolean;
   getBalanceForAccount: (id: string) => string;
   deleteAccount: (id: string) => void;
@@ -333,13 +338,15 @@ export default function AccountCards({ items, balances, onDelete, onRestore }: P
       
       onDelete?.(id);
       show(`${accountName} hesabı başarıyla silindi`, 'success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       let message = 'Hesap silinirken beklenmeyen bir hata oluştu';
       
-      if (error?.message?.includes('not found')) {
-        message = 'Hesap bulunamadı. Sayfayı yenileyip tekrar deneyin.';
-      } else if (error?.message) {
-        message = error.message;
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          message = 'Hesap bulunamadı. Sayfayı yenileyip tekrar deneyin.';
+        } else {
+          message = error.message;
+        }
       }
       
       show(message, 'error');

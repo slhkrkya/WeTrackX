@@ -98,8 +98,8 @@ export default function ProfileClient() {
       // Profil bilgilerini güncelle
       const updatedProfile = await UsersAPI.getProfile();
       setProfile(updatedProfile);
-    } catch (error: any) {
-      const message = error?.message || 'Profil güncellenirken hata oluştu';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Profil güncellenirken hata oluştu';
       show(message, 'error', 5000, 'Hata');
       setErr(message);
     } finally {
@@ -170,8 +170,8 @@ export default function ProfileClient() {
         window.location.href = '/';
       }, 2000);
       
-    } catch (error: any) {
-      const message = error?.message || 'Şifre değiştirilirken hata oluştu';
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Şifre değiştirilirken hata oluştu';
       show(message, 'error');
       setErr(message);
     } finally {

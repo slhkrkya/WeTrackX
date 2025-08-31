@@ -12,11 +12,11 @@ const protectedRoutes = [
 ];
 
 // Public rotalar (giriş gerektirmeyen)
-const publicRoutes = [
-  '/',
-  '/auth/login',
-  '/auth/register'
-];
+// const publicRoutes = [
+//   '/',
+//   '/auth/login',
+//   '/auth/register'
+// ];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

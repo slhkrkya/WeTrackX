@@ -230,7 +230,6 @@ export class TransactionsService {
       if (transactions.length > 0) {
         // Tüm işlemleri soft delete yap
         await this.repo.softRemove(transactions);
-        console.log(`${transactions.length} adet işlem soft delete yapıldı (hesap: ${accountId})`);
       }
 
       return transactions.length;
@@ -256,7 +255,6 @@ export class TransactionsService {
       if (transactions.length > 0) {
         // Tüm işlemleri soft delete yap
         await transactionalEntityManager.softRemove(transactions);
-        console.log(`${transactions.length} adet işlem soft delete yapıldı (hesap: ${accountId})`);
       }
 
       return transactions.length;
@@ -288,7 +286,7 @@ export class TransactionsService {
         // Raw SQL ile deletedAt'i NULL yap
         await this.repo.query('UPDATE "transaction" SET "deletedAt" = NULL WHERE "id" = ANY($1)', [transactionIds]);
         
-        console.log(`${transactionsToRestore.length} adet işlem geri yüklendi (hesap: ${accountId})`);
+
       }
 
       return transactionsToRestore.length;

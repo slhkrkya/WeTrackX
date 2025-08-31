@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { CategoriesAPI, type CategoryDTO } from '@/lib/categories';
 import { type CategoryKind, CATEGORY_KIND_LABELS_TR } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
+import SuspenseFallback from '@/components/SuspenseFallback';
 
 const KINDS: CategoryKind[] = ['INCOME', 'EXPENSE'];
 
@@ -50,31 +51,31 @@ function SegmentedKind({
   );
 }
 
-function LoadingSkeleton() {
-  const rows = Array.from({ length: 6 });
-  return (
-    <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="hidden md:grid grid-cols-5 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
-        <div>Ad</div>
-        <div>Tür</div>
-        <div>Öncelik</div>
-        <div>Renk</div>
-        <div className="text-right">İşlemler</div>
-      </div>
-      <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-        {rows.map((_, i) => (
-          <li key={i} className="grid md:grid-cols-5 grid-cols-2 gap-4 px-6 py-4">
-            <div className="col-span-2 md:col-span-1 h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-            <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+// function LoadingSkeleton() {
+//   const rows = Array.from({ length: 6 });
+//   return (
+//     <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+//       <div className="hidden md:grid grid-cols-5 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
+//         <div>Ad</div>
+//         <div>Tür</div>
+//         <div>Öncelik</div>
+//         <div>Renk</div>
+//         <div className="text-right">İşlemler</div>
+//       </div>
+//       <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+//         {rows.map((_, i) => (
+//           <li key={i} className="grid md:grid-cols-5 grid-cols-2 gap-4 px-6 py-4">
+//             <div className="col-span-2 md:col-span-1 h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//             <div className="h-4 g rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//             <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//             <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//             <div className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// }
 
 export default function CategoriesClient() {
   const router = useRouter();
@@ -141,18 +142,20 @@ export default function CategoriesClient() {
       // Başarılı silme sonrası listeyi yenile
       setItems(items.filter(item => item.id !== id));
       show(`${categoryName} kategorisi başarıyla silindi`, 'success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       let message = 'Kategori silinirken beklenmeyen bir hata oluştu';
       
       // Backend'den gelen hata mesajlarını kontrol et
-      if (error?.message?.includes('related transactions')) {
-        message = 'Bu kategoriye ait işlemler bulunduğu için silinemez. Önce işlemleri silin veya başka bir kategoriye taşıyın.';
-      } else if (error?.message?.includes('not found')) {
-        message = 'Kategori bulunamadı. Sayfayı yenileyip tekrar deneyin.';
-      } else if (error?.message?.includes('system')) {
-        message = 'Sistem kategorileri silinemez.';
-      } else if (error?.message) {
-        message = error.message;
+      if (error instanceof Error) {
+        if (error.message.includes('related transactions')) {
+          message = 'Bu kategoriye ait işlemler bulunduğu için silinemez. Önce işlemleri silin veya başka bir kategoriye taşıyın.';
+        } else if (error.message.includes('not found')) {
+          message = 'Kategori bulunamadı. Sayfayı yenileyip tekrar deneyin.';
+        } else if (error.message.includes('system')) {
+          message = 'Sistem kategorileri silinemez.';
+        } else {
+          message = error.message;
+        }
       }
       
       show(message, 'error');
@@ -223,7 +226,7 @@ export default function CategoriesClient() {
 
       {/* Liste */}
       {loading ? (
-        <LoadingSkeleton />
+        <SuspenseFallback message="Kategoriler yükleniyor..." />
       ) : (
         <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden" role="table" aria-label="Kategori listesi">
           {/* Başlık (md+) */}

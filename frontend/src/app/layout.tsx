@@ -2,6 +2,8 @@ import AppShell from '@/components/AppShell';
 import './globals.css';
 import type { Metadata } from 'next';
 import ToastProvider from '@/components/ToastProvider';
+import LoadingProvider from '@/components/LoadingProvider';
+import RouteLoading from '@/components/RouteLoading';
 
 export const metadata: Metadata = {
   title: 'WeTrackX',
@@ -12,11 +14,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="tr" data-theme="dark">
       <body>
+        <LoadingProvider>
           <ToastProvider>
             <AppShell>
+              <RouteLoading />
               {children}
             </AppShell>
           </ToastProvider>
+        </LoadingProvider>
       </body>
     </html>
   );

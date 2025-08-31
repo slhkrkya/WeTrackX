@@ -8,6 +8,8 @@ import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
 import { CategoriesAPI, type CategoryDTO } from '@/lib/categories';
 import { fmtDate, fmtMoney } from '@/lib/format';
 import { useToast } from '@/components/ToastProvider';
+import SuspenseFallback from '@/components/SuspenseFallback';
+import DatePicker from '@/components/ui/DatePicker';
 
 type TxItem = {
   id: string;
@@ -120,41 +122,41 @@ function SegmentedType({
   );
 }
 
-function FiltersSkeleton() {
-  return (
-    <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 grid lg:grid-cols-6 gap-4 p-6">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="space-y-2">
-          <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-          <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-        </div>
-      ))}
-      <div className="lg:col-span-6 flex gap-3">
-        <div className="h-10 w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-        <div className="h-10 w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-      </div>
-    </div>
-  );
-}
+// function FiltersSkeleton() {
+//   return (
+//     <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 grid lg:grid-cols-6 gap-4 p-6">
+//       {Array.from({ length: 6 }).map((_, i) => (
+//         <div key={i} className="space-y-2">
+//           <div className="h-3 w-16 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//           <div className="h-10 w-full rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//         </div>
+//       ))}
+//       <div className="lg:col-span-6 flex gap-3">
+//         <div className="h-10 w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//         <div className="h-10 w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
+//       </div>
+//     </div>
+//   );
+// }
 
-function ListSkeleton() {
-  return (
-    <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
-      <div className="hidden md:grid grid-cols-7 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
-        <div>Tarih</div><div>Tür</div><div>Başlık</div><div>Hesap / Karşı Hesap</div><div>Kategori</div><div className="text-right">Tutar</div><div className="text-right">İşlemler</div>
-      </div>
-      <ul className="divide-y divide-gray-100 dark:divide-gray-700">
-        {Array.from({ length: 8 }).map((_, i) => (
-          <li key={i} className="grid md:grid-cols-7 grid-cols-2 gap-4 px-6 py-4">
-            {Array.from({ length: 7 }).map((__, k) => (
-              <div key={k} className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse md:block" />
-            ))}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+// function ListSkeleton() {
+//   return (
+//     <div className="reveal bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+//       <div className="hidden md:grid grid-cols-7 gap-4 px-6 py-4 text-xs font-medium text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-700/50">
+//         <div>Tarih</div><div>Tür</div><div>Başlık</div><div>Hesap / Karşı Hesap</div><div>Kategori</div><div className="text-right">Tutar</div><div className="text-right">İşlemler</div>
+//       </div>
+//       <ul className="divide-y divide-gray-100 dark:divide-gray-700">
+//         {Array.from({ length: 8 }).map((_, i) => (
+//           <li key={i} className="grid md:grid-cols-7 grid-cols-2 gap-4 px-6 py-4">
+//             {Array.from({ length: 7 }).map((__, k) => (
+//               <div key={k} className="h-4 rounded bg-gray-200 dark:bg-gray-600 animate-pulse md:block" />
+//             ))}
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// }
 
 export default function TransactionsClient() {
   const router = useRouter();
@@ -370,17 +372,7 @@ export default function TransactionsClient() {
   }
 
   if (loading) {
-    return (
-      <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
-        {/* Başlık + Yeni İşlem */}
-        <div className="reveal flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="h-7 w-40 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-          <div className="h-10 w-full sm:w-28 rounded bg-gray-200 dark:bg-gray-600 animate-pulse" />
-        </div>
-        <FiltersSkeleton />
-        <ListSkeleton />
-      </main>
-    );
+    return <SuspenseFallback message="İşlemler yükleniyor..." fullScreen />;
   }
 
   return (
@@ -462,21 +454,23 @@ export default function TransactionsClient() {
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Başlangıç</label>
-          <input
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            type="date"
+          <DatePicker
             value={formFrom}
-            onChange={(e) => setFormFrom(e.target.value)}
+            onChange={setFormFrom}
+            type="datetime-local"
+            placeholder="Başlangıç tarihi"
+            showTime={true}
           />
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bitiş</label>
-          <input
-            className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-            type="date"
+          <DatePicker
             value={formTo}
-            onChange={(e) => setFormTo(e.target.value)}
+            onChange={setFormTo}
+            type="datetime-local"
+            placeholder="Bitiş tarihi"
+            showTime={true}
           />
         </div>
 

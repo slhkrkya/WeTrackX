@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ReportsAPI, type CategoryTotal, type Cashflow } from "@/lib/reports";
+import SuspenseFallback from "@/components/SuspenseFallback";
 
 function MonthInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
@@ -95,7 +96,7 @@ export default function ReportsPage() {
     };
   }, [ym]);
 
-  if (loading) return <main className="p-6">Yükleniyor…</main>;
+  if (loading) return <SuspenseFallback message="Raporlar yükleniyor..." />;
 
   return (
     <main className="min-h-dvh p-6 space-y-6">

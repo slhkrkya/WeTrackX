@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { CategoriesAPI, type CategoryDTO } from '@/lib/categories';
 import { type CategoryKind, CATEGORY_KIND_LABELS_TR } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
+import ColorPicker from '@/components/ui/ColorPicker';
 
 type Props = { id: string };
 
@@ -77,10 +78,10 @@ export default function CategoryEditClient({ id }: Props) {
 
       show('Kategori başarıyla güncellendi', 'success');
       router.push('/categories');
-    } catch (error: any) {
+    } catch (error: unknown) {
       let message = 'Kategori güncellenirken hata oluştu';
       
-      if (error?.message) {
+      if (error instanceof Error) {
         message = error.message;
       }
       
@@ -264,11 +265,10 @@ export default function CategoryEditClient({ id }: Props) {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Renk</label>
-            <input
-              type="color"
-              className="w-full h-12 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            <ColorPicker
               value={formData.color}
-              onChange={(e) => setFormData(prev => ({ ...prev, color: e.target.value }))}
+              onChange={(color) => setFormData(prev => ({ ...prev, color }))}
+              placeholder="#000000"
             />
           </div>
 

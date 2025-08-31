@@ -322,7 +322,7 @@ export default function LoginPage() {
           <div className="text-center">
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Şifrenizi mi unuttunuz?{' '}
-              <span className="opacity-80">Yakında "şifre sıfırla" eklenecek.</span>
+              <span className="opacity-80">Yakında &quot;şifre sıfırla&quot; eklenecek.</span>
             </p>
           </div>
         </form>
