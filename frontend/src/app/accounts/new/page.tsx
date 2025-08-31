@@ -250,34 +250,44 @@ export default function NewAccountPage() {
           </div>
 
           {/* Aksiyonlar */}
-          <div className="flex items-center gap-3 pt-4">
+          <div className="grid grid-cols-2 gap-3 pt-6">
+            <Link 
+              href="/dashboard" 
+              className="w-full px-6 py-3 rounded-xl font-medium text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              İptal
+            </Link>
+            
             <button
               disabled={loading}
               className={[
-                'flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-300',
+                'w-full px-6 py-3 rounded-xl font-medium transition-all duration-300',
                 'bg-gradient-to-r from-blue-600 to-purple-600 text-white',
                 'hover:from-blue-700 hover:to-purple-700',
                 'focus:ring-2 focus:ring-blue-500/20',
                 'disabled:opacity-50 disabled:cursor-not-allowed',
-                'transform hover:scale-105'
+                'transform hover:scale-105 shadow-lg hover:shadow-xl',
+                'flex items-center justify-center gap-2'
               ].join(' ')}
               type="submit"
             >
               {loading ? (
-                <div className="flex items-center gap-2">
+                <>
                   <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                  Kaydediliyor...
-                </div>
+                  <span>Kaydediliyor...</span>
+                </>
               ) : (
-                'Hesabı Oluştur'
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  <span>Oluştur</span>
+                </>
               )}
             </button>
-                         <Link 
-               href="/dashboard" 
-               className="px-6 py-3 rounded-xl font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
-             >
-               İptal
-             </Link>
           </div>
         </form>
       </div>

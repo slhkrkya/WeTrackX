@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrollSmoother } from 'gsap/ScrollSmoother';
 import MonthlySeriesChart from '@/components/dashboard/MonthlySeriesChart';
 import CategoryTotals from '@/components/dashboard/CategoryTotals';
 import RecentTransactions from '@/components/dashboard/RecentTransactions';
@@ -32,6 +35,14 @@ export default function DashboardPage() {
   
   // Hesap seçimi state'i
   const [selectedAccountId, setSelectedAccountId] = useState<string>('all');
+
+  // ScrollSmoother refs
+  const headerRef = useRef<HTMLDivElement>(null);
+  const accountsRef = useRef<HTMLElement>(null);
+  const chartRef = useRef<HTMLElement>(null);
+  const categoriesRef = useRef<HTMLElement>(null);
+  const cashflowRef = useRef<HTMLElement>(null);
+  const transactionsRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     (async () => {
@@ -64,6 +75,132 @@ export default function DashboardPage() {
     })();
   }, [router, selectedAccountId]);
 
+  // ScrollSmoother animasyonları
+  useEffect(() => {
+    if (loading) return;
+
+    // GSAP plugins'ini kaydet
+    gsap.registerPlugin(ScrollTrigger, ScrollSmoother);
+
+    // Header animasyonu
+    if (headerRef.current) {
+      gsap.fromTo(headerRef.current, 
+        { opacity: 0, y: 50 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: headerRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        }
+      );
+    }
+
+    // Hesap kartları animasyonu
+    if (accountsRef.current) {
+      gsap.fromTo(accountsRef.current,
+        { opacity: 0, y: 60 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: accountsRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        }
+      );
+    }
+
+    // Grafik animasyonu
+    if (chartRef.current) {
+      gsap.fromTo(chartRef.current,
+        { opacity: 0, y: 60 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: chartRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        }
+      );
+    }
+
+    // Kategoriler animasyonu
+    if (categoriesRef.current) {
+      gsap.fromTo(categoriesRef.current,
+        { opacity: 0, y: 60 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: categoriesRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        }
+      );
+    }
+
+    // Nakit akışı animasyonu
+    if (cashflowRef.current) {
+      gsap.fromTo(cashflowRef.current,
+        { opacity: 0, y: 60 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: cashflowRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        }
+      );
+    }
+
+    // Son işlemler animasyonu
+    if (transactionsRef.current) {
+      gsap.fromTo(transactionsRef.current,
+        { opacity: 0, y: 60 },
+        { 
+          opacity: 1, 
+          y: 0, 
+          duration: 0.8, 
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: transactionsRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play none none reverse',
+          }
+        }
+      );
+    }
+
+    return () => {
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, [loading]);
+
   // Hesap seçimi değiştiğinde işlemleri yenile
   useEffect(() => {
     (async () => {
@@ -90,7 +227,7 @@ export default function DashboardPage() {
   return (
     <main className="min-h-dvh p-4 md:p-6 space-y-6 bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
       {/* Başlık + Aksiyon */}
-      <div className="reveal flex items-center justify-between">
+      <div ref={headerRef} className="reveal flex items-center justify-between">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Dashboard
@@ -111,7 +248,7 @@ export default function DashboardPage() {
       )}
 
       {/* Modern Hesap Kartları */}
-      <section className="reveal space-y-3">
+      <section ref={accountsRef} className="reveal space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,19 +297,19 @@ export default function DashboardPage() {
       </section>
 
       {/* Aylık Seri */}
-      <section className="reveal">
+      <section ref={chartRef} className="reveal">
         <MonthlySeriesChart incomeCategories={catIncome} expenseCategories={catExpense} />
       </section>
 
       {/* Kategoriler */}
-      <section className="reveal grid gap-4 lg:grid-cols-2">
+      <section ref={categoriesRef} className="reveal grid gap-4 lg:grid-cols-2">
         <CategoryTotals title="Gelir Kategorileri" items={catIncome} currency={baseCurrency} />
         <CategoryTotals title="Gider Kategorileri" items={catExpense} currency={baseCurrency} />
       </section>
 
       {/* Nakit Akışı (özet) */}
       {cashflow && (
-        <section className="reveal">
+        <section ref={cashflowRef} className="reveal">
           <h2 className="text-lg md:text-xl font-semibold mb-4 text-gray-900 dark:text-white flex items-center gap-2">
             <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -203,7 +340,7 @@ export default function DashboardPage() {
       )}
 
       {/* Son İşlemler */}
-      <section className="reveal">
+      <section ref={transactionsRef} className="reveal">
         <RecentTransactions 
           items={recent} 
           selectedAccountId={selectedAccountId}

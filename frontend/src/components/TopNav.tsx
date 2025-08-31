@@ -21,9 +21,9 @@ export default function TopNav() {
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // /transactions altında her alt sayfayı aktif say
+  // /transactions altında her alt sayfayı aktif say, ama /transactions/new hariç
   function isActive(href: string) {
-    if (href === '/transactions' && pathname?.startsWith('/transactions')) return true;
+    if (href === '/transactions' && pathname?.startsWith('/transactions') && pathname !== '/transactions/new') return true;
     if (href === '/profile' && pathname?.startsWith('/profile')) return true;
     return pathname === href;
   }
@@ -80,7 +80,7 @@ export default function TopNav() {
     >
       <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
         {/* Brand */}
-        <Link href="/" className="font-bold text-xl tracking-tight gradient-text">
+        <Link href="/" className="font-bold text-2xl md:text-3xl tracking-tight gradient-text mr-6">
           WeTrackX
         </Link>
 
@@ -110,6 +110,17 @@ export default function TopNav() {
               </Link>
             );
           })}
+          
+          {/* Yeni İşlem Ekle Butonu */}
+          <Link
+            href="/transactions/new"
+            className="inline-flex items-center justify-center px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white text-gray-600 dark:text-gray-300 shadow-sm hover:shadow-lg transition-all duration-300 transform hover:scale-110 active:scale-95"
+            title="Yeni işlem ekle"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+          </Link>
         </nav>
 
         {/* Spacer */}
@@ -194,6 +205,17 @@ export default function TopNav() {
                 </Link>
               );
             })}
+            
+            {/* Yeni İşlem Ekle Butonu - Mobil */}
+            <Link
+              href="/transactions/new"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white text-gray-600 dark:text-gray-300 transition-all duration-300 transform hover:scale-105 active:scale-95"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Yeni İşlem
+            </Link>
             <hr className="my-2 border-gray-200 dark:border-gray-700" />
             <Link
               href="/profile"

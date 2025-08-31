@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo, useState, useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { type CategoryTotal } from '@/lib/reports';
 import { fmtMoney } from '@/lib/format';
 import { ReportsAPI } from '@/lib/reports';
@@ -68,8 +70,12 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
       setViewMode('yearly');
     }
   }, [selectedYear]);
-  const chartRef = useRef<HTMLDivElement>(null);
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Animasyon ref'leri
+  const barChartRef = useRef<HTMLDivElement>(null);
+  const incomePieRef = useRef<HTMLDivElement>(null);
+  const expensePieRef = useRef<HTMLDivElement>(null);
 
   // Yıl listesi oluştur (2020-2030 arası)
   const yearOptions = useMemo(() => {
@@ -198,6 +204,88 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
 
     fetchCategoryData();
   }, [incomeCategories, expenseCategories, selectedYear]);
+
+  // Grafik animasyonları
+  useEffect(() => {
+    if (loading || categoryLoading) return;
+
+    // GSAP plugins'ini kaydet
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Kısa bir gecikme ile animasyonları başlat
+    const timer = setTimeout(() => {
+      // Bar chart animasyonu - barların 0'dan yükselmesi
+      if (barChartRef.current) {
+        const bars = barChartRef.current.querySelectorAll('[data-bar]');
+        
+        if (bars.length > 0) {
+          // Önce tüm barları 0 yüksekliğinde başlat
+          gsap.set(bars, { height: 0, opacity: 0 });
+          
+          // Sonra animasyonla yükselt - tüm barlar aynı anda
+          gsap.to(bars, 
+            { 
+              height: (i, target) => {
+                const computedStyle = window.getComputedStyle(target);
+                return computedStyle.height;
+              },
+              opacity: 1,
+              duration: 1.2,
+              ease: 'power2.out',
+              stagger: 0, // Hiç stagger yok - hepsi aynı anda
+              scrollTrigger: {
+                trigger: barChartRef.current,
+                start: 'top 80%',
+                end: 'bottom 20%',
+                toggleActions: 'play none none reverse',
+              }
+            }
+          );
+        }
+      }
+
+      // Pasta grafikleri animasyonu - çizgiden daireye dönüşüm
+      const pieRefs = [incomePieRef, expensePieRef];
+      pieRefs.forEach((ref, index) => {
+        if (ref.current) {
+          const paths = ref.current.querySelectorAll('path');
+          if (paths.length > 0) {
+            // Her path için animasyon
+            paths.forEach((path, pathIndex) => {
+              // Önce path'i görünmez yap
+              gsap.set(path, { 
+                opacity: 0,
+                scale: 0,
+                transformOrigin: 'center'
+              });
+              
+              // Sonra animasyonla görünür yap - saat yönünde
+              gsap.to(path,
+                { 
+                  opacity: 1,
+                  scale: 1,
+                  duration: 1.0,
+                  delay: 0.3 + (index * 0.2) + (pathIndex * 0.1),
+                  ease: 'power2.out',
+                  scrollTrigger: {
+                    trigger: ref.current,
+                    start: 'top 80%',
+                    end: 'bottom 20%',
+                    toggleActions: 'play none none reverse',
+                  }
+                }
+              );
+            });
+          }
+        }
+      });
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+    };
+  }, [loading, categoryLoading]);
 
   // Ana pasta grafiği için veri hesaplama
   const mainChartData = useMemo(() => {
@@ -583,7 +671,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
     };
 
     return (
-      <div className="w-full" ref={chartRef}>
+      <div className="w-full" ref={barChartRef}>
         <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4 text-center">
           Gelir Gider Karşılaştırması
         </h4>
@@ -642,6 +730,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                         {income > 0 && (
                           <div className="relative">
                             <div
+                              data-bar="income"
                               className="bg-gradient-to-t from-green-600 to-green-500 rounded-t-sm shadow-sm transition-all duration-200 hover:from-green-700 hover:to-green-600 hover:shadow-md cursor-pointer"
                               style={{
                                 width: barWidth,
@@ -658,6 +747,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                         {expense > 0 && (
                           <div className="relative">
                             <div
+                              data-bar="expense"
                               className="bg-gradient-to-t from-red-600 to-red-500 rounded-t-sm shadow-sm transition-all duration-200 hover:from-red-700 hover:to-red-600 hover:shadow-md cursor-pointer"
                               style={{
                                 width: barWidth,
@@ -863,12 +953,14 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                     </div>
                   ) : (
                     <>
-                      <PieChart
-                        data={incomeChartData}
-                        title="Gelir Kategorileri"
-                        size={300}
-                        onSliceHover={setHoveredSlice}
-                      />
+                      <div ref={incomePieRef}>
+                        <PieChart
+                          data={incomeChartData}
+                          title="Gelir Kategorileri"
+                          size={300}
+                          onSliceHover={setHoveredSlice}
+                        />
+                      </div>
                       <div className="mt-4 w-full max-w-xs">
                         <Legend data={incomeChartData} title="Gelir Kategorileri" />
                       </div>
@@ -890,12 +982,14 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                     </div>
                   ) : (
                     <>
-                      <PieChart
-                        data={expenseChartData}
-                        title="Gider Kategorileri"
-                        size={300}
-                        onSliceHover={setHoveredSlice}
-                      />
+                      <div ref={expensePieRef}>
+                        <PieChart
+                          data={expenseChartData}
+                          title="Gider Kategorileri"
+                          size={300}
+                          onSliceHover={setHoveredSlice}
+                        />
+                      </div>
                       <div className="mt-4 w-full max-w-xs">
                         <Legend data={expenseChartData} title="Gider Kategorileri" />
                       </div>
