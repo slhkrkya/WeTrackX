@@ -9,6 +9,8 @@ WeTrackX, kullanıcıların kişisel finanslarını yönetebileceği, gelir ve g
 - **İşlem Takibi**: Gelir, gider ve transfer işlemleri
 - **Kategori Sistemi**: Sistem ve kullanıcı kategorileri
 - **Bakiye Takibi**: Gerçek zamanlı hesap bakiyeleri
+- **Hesap Silme Sistemi**: 7 günlük geri yükleme süresi ile soft delete
+- **İşlem Cascade**: Hesap silindiğinde bağlı işlemler de geçici olarak gizlenir
 
 ### 📊 Raporlama ve Analiz
 - **Dashboard**: Aylık gelir/gider grafikleri
@@ -21,6 +23,7 @@ WeTrackX, kullanıcıların kişisel finanslarını yönetebileceği, gelir ve g
 - **Profil Yönetimi**: Kullanıcı bilgileri ve şifre değiştirme
 - **Modern UI**: Responsive tasarım ve sürükle-bırak özellikleri
 - **Türkçe Arayüz**: Tam Türkçe dil desteği
+- **Otomatik Temizleme**: 7 günlük otomatik hesap ve işlem temizleme
 
 ---
 
@@ -214,6 +217,12 @@ npm run dev
 - Gelir veya gider işlemi oluşturun
 - Kategori seçin ve kaydedin
 
+### 4. Hesap Silme ve Geri Yükleme
+- Hesap silindiğinde 7 gün boyunca geri yüklenebilir
+- Silinmiş hesaplar "Silinmiş Hesaplar" bölümünde görünür
+- Hesap geri yüklendiğinde bağlı tüm işlemler de geri gelir
+- 7 gün sonra hesap ve işlemler kalıcı olarak silinir
+
 ---
 
 ## 🏗️ Proje Yapısı
@@ -343,6 +352,13 @@ npm install
 cd backend
 npm run migration:revert
 npm run migration:run
+```
+
+#### 6. "Hesap silindi ama işlemler görünüyor"
+```bash
+# Bu normal bir durumdur. İşlemler 7 gün sonra otomatik temizlenir
+# Veya hesabı geri yükleyerek işlemleri tekrar görünür hale getirebilirsiniz
+# "Silinmiş Hesaplar" bölümünden hesabı geri yükleyin
 ```
 
 ### Log Dosyaları
