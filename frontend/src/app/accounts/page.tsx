@@ -79,6 +79,19 @@ export default function AccountsPage() {
           onDelete={(id) => {
             setItems(items.filter(item => item.id !== id));
           }}
+          onRestore={async (id) => {
+            // Hesap geri yüklendiğinde listeyi yenile
+            try {
+              const [accountsData, balancesData] = await Promise.all([
+                AccountsAPI.list(),
+                ReportsAPI.balances(),
+              ]);
+              setItems(accountsData);
+              setBalances(balancesData);
+            } catch (e: unknown) {
+              console.error('Hesap listesi yenilenirken hata:', e);
+            }
+          }}
         />
       )}
     </main>

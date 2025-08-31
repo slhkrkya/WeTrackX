@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { type AccountDTO } from '@/lib/accounts';
 import { type BalanceItem } from '@/lib/reports';
 import { AccountsAPI } from '@/lib/accounts';
 import { ACCOUNT_TYPE_LABELS_TR } from '@/lib/types';
 import { useToast } from '@/components/ToastProvider';
+import { getUser } from '@/lib/auth';
 import Link from 'next/link';
 import React from 'react';
+import DeletedAccountsModal from './DeletedAccountsModal';
 import {
   DndContext,
   closestCenter,
@@ -32,7 +34,11 @@ type Props = {
   items: AccountDTO[];
   balances?: BalanceItem[];
   onDelete?: (id: string) => void;
+  onRestore?: (id: string) => void;
 };
+
+// localStorage key'i - kullanıcıya özel
+const getAccountOrderKey = (userId?: string) => `weTrackX_accountOrder_${userId || 'anonymous'}`;
 
 // Hesap türüne göre kart stilleri
 const accountCardStyles = {
@@ -197,9 +203,10 @@ function SortableAccountCard({
   );
 }
 
-export default function AccountCards({ items, balances, onDelete }: Props) {
+export default function AccountCards({ items, balances, onDelete, onRestore }: Props) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [orderedItems, setOrderedItems] = useState<AccountDTO[]>(items);
+  const [showDeletedModal, setShowDeletedModal] = useState(false);
   const { show } = useToast();
 
   // Sürükleme sensörleri - performans optimizasyonu
@@ -214,6 +221,32 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
     })
   );
 
+  // localStorage'dan sıralama durumunu yükle
+  const loadAccountOrder = (): string[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+      const user = getUser();
+      const orderKey = getAccountOrderKey(user?.id);
+      const savedOrder = localStorage.getItem(orderKey);
+      return savedOrder ? JSON.parse(savedOrder) : [];
+    } catch (error) {
+      console.error('Sıralama durumu yüklenirken hata:', error);
+      return [];
+    }
+  };
+
+  // localStorage'a sıralama durumunu kaydet
+  const saveAccountOrder = (order: string[]) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const user = getUser();
+      const orderKey = getAccountOrderKey(user?.id);
+      localStorage.setItem(orderKey, JSON.stringify(order));
+    } catch (error) {
+      console.error('Sıralama durumu kaydedilirken hata:', error);
+    }
+  };
+
   // Sürükleme bittiğinde çağrılır
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -223,14 +256,46 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
         const oldIndex = items.findIndex((item) => item.id === active.id);
         const newIndex = items.findIndex((item) => item.id === over?.id);
 
-        return arrayMove(items, oldIndex, newIndex);
+        const newOrderedItems = arrayMove(items, oldIndex, newIndex);
+        
+        // Yeni sıralamayı localStorage'a kaydet
+        const newOrder = newOrderedItems.map(item => item.id);
+        saveAccountOrder(newOrder);
+        
+        return newOrderedItems;
       });
     }
   }
 
-  // items değiştiğinde orderedItems'ı güncelle
-  React.useEffect(() => {
+  // items değiştiğinde orderedItems'ı güncelle ve sıralama durumunu uygula
+  useEffect(() => {
+    if (!items?.length) {
+      setOrderedItems([]);
+      return;
+    }
+
+    const savedOrder = loadAccountOrder();
+    
+    // Eğer kaydedilmiş sıralama varsa ve tüm hesaplar mevcutsa, o sıralamayı kullan
+    if (savedOrder.length > 0 && savedOrder.length === items.length) {
+      const allIdsExist = savedOrder.every(id => items.some(item => item.id === id));
+      
+      if (allIdsExist) {
+        // Kaydedilmiş sıralamaya göre hesapları düzenle
+        const orderedAccounts = savedOrder.map(id => 
+          items.find(item => item.id === id)!
+        );
+        setOrderedItems(orderedAccounts);
+        return;
+      }
+    }
+    
+    // Kaydedilmiş sıralama yoksa veya geçersizse, varsayılan sıralamayı kullan
     setOrderedItems(items);
+    
+    // Yeni hesaplar için varsayılan sıralamayı kaydet
+    const defaultOrder = items.map(item => item.id);
+    saveAccountOrder(defaultOrder);
   }, [items]);
 
   // Hesap için bakiye bulma fonksiyonu
@@ -253,7 +318,7 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
     const account = items.find(item => item.id === id);
     const accountName = account?.name || 'Hesap';
     
-    if (!confirm(`${accountName} hesabını silmek istediğinizden emin misiniz?\n\n⚠️ Bu işlem geri alınamaz ve hesaba ait tüm işlemler de silinecektir.`)) {
+    if (!confirm(`${accountName} hesabını silmek istediğinizden emin misiniz?\n\n⚠️ Hesap silinecek ancak 7 gün boyunca geri yüklenebilir.\n💾 İşlemler korunacaktır.\n⏰ 7 gün sonra kalıcı olarak silinir.`)) {
       return;
     }
 
@@ -261,14 +326,17 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
       setDeletingId(id);
       await AccountsAPI.delete(id);
       
+      // Silinen hesabı localStorage'dan da çıkar
+      const currentOrder = loadAccountOrder();
+      const updatedOrder = currentOrder.filter(accountId => accountId !== id);
+      saveAccountOrder(updatedOrder);
+      
       onDelete?.(id);
       show(`${accountName} hesabı başarıyla silindi`, 'success');
     } catch (error: any) {
       let message = 'Hesap silinirken beklenmeyen bir hata oluştu';
       
-      if (error?.message?.includes('related transactions')) {
-        message = 'Bu hesaba ait işlemler bulunduğu için silinemez. Önce işlemleri silin veya başka bir hesaba taşıyın.';
-      } else if (error?.message?.includes('not found')) {
+      if (error?.message?.includes('not found')) {
         message = 'Hesap bulunamadı. Sayfayı yenileyip tekrar deneyin.';
       } else if (error?.message) {
         message = error.message;
@@ -309,7 +377,7 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={orderedItems.map(item => item.id)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {orderedItems.map((account) => {
               const styles = accountCardStyles[account.type];
               const isWallet = account.type === 'WALLET';
@@ -361,22 +429,48 @@ export default function AccountCards({ items, balances, onDelete }: Props) {
       </DndContext>
 
       {/* Hesap Özeti */}
-      <div className="card bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-6">
-        <div className="flex items-center justify-between">
+      <div className="card bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Hesap Özeti</h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">Toplam hesap sayınız</p>
           </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold text-gray-900 dark:text-white">
-              ₺{getTotalBalance()}
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {items.length} hesap
-            </p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-3 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
+            <button
+              onClick={() => setShowDeletedModal(true)}
+              className="w-full sm:w-auto px-3 py-2 text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center justify-center group"
+            >
+              <svg className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              <span className="hidden sm:inline">Silinmiş Hesaplar</span>
+              <span className="sm:hidden">Silinenler</span>
+            </button>
+            <div className="text-center sm:text-right w-full sm:w-auto">
+              <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                ₺{getTotalBalance()}
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                {items.length} hesap
+              </p>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Silinmiş Hesaplar Modal */}
+      <DeletedAccountsModal
+        isOpen={showDeletedModal}
+        onClose={() => setShowDeletedModal(false)}
+        onRestore={(id) => {
+          // Hesap geri yüklendiğinde parent component'e bildir
+          if (onRestore) {
+            onRestore(id);
+          }
+          // Modal'ı kapat
+          setShowDeletedModal(false);
+        }}
+      />
     </div>
   );
 }

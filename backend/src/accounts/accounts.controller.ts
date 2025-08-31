@@ -14,6 +14,11 @@ export class AccountsController {
     return this.accounts.list({ id: u.userId } as any);
   }
 
+  @Get('deleted')
+  async listDeleted(@CurrentUser() u: { userId: string; email: string }) {
+    return this.accounts.listDeleted({ id: u.userId } as any);
+  }
+
   @Post()
   create(
     @CurrentUser() u: { userId: string; email: string },
@@ -46,8 +51,40 @@ export class AccountsController {
       if (!ok) return { statusCode: 404, message: 'Account not found' };
       return { statusCode: 204 } as any;
     } catch (e: any) {
-      // FK constraint ile ilişkili transaction varsa 409
-      throw new ConflictException('Account has related transactions');
+      console.error('Hesap silme hatası:', e);
+      throw new Error('Hesap silinirken beklenmeyen bir hata oluştu');
+    }
+  }
+
+  @Post(':id/restore')
+  async restore(
+    @CurrentUser() u: { userId: string; email: string },
+    @Param('id') id: string,
+  ) {
+    try {
+      const account = await this.accounts.restore({ id: u.userId } as any, id);
+      return account;
+    } catch (e: any) {
+      console.error('Hesap geri yükleme hatası:', e);
+      if (e.message) {
+        throw new Error(e.message);
+      }
+      throw new Error('Hesap geri yüklenirken beklenmeyen bir hata oluştu');
+    }
+  }
+
+  // Admin endpoint - Eski silinmiş hesapları temizle
+  @Post('cleanup-old-deleted')
+  async cleanupOldDeleted() {
+    try {
+      const cleanedCount = await this.accounts.cleanupOldDeletedAccounts();
+      return { 
+        message: `${cleanedCount} adet eski silinmiş hesap temizlendi`,
+        cleanedCount 
+      };
+    } catch (e: any) {
+      console.error('Temizleme hatası:', e);
+      throw new Error('Eski hesaplar temizlenirken hata oluştu');
     }
   }
 }

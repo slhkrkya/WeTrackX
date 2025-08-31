@@ -42,5 +42,17 @@ export async function api<T = unknown>(
     throw new Error(message);
   }
 
-  return res.json() as Promise<T>;
+  // Response'un boş olup olmadığını kontrol et
+  const contentType = res.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    try {
+      return await res.json() as Promise<T>;
+    } catch (error) {
+      // JSON parse hatası durumunda boş response olarak kabul et
+      return {} as T;
+    }
+  }
+  
+  // JSON response değilse boş object döndür
+  return {} as T;
 }

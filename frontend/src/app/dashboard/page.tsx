@@ -13,9 +13,7 @@ import {
   type Cashflow,
 } from '@/lib/reports';
 import { AccountsAPI, type AccountDTO } from '@/lib/accounts';
-import { clearAuth } from '@/lib/auth';
 import { fmtMoney } from '@/lib/format';
-import Link from 'next/link';
 import AccountCards from '@/components/accounts/AccountCards';
 
 export default function DashboardPage() {
@@ -57,19 +55,11 @@ export default function DashboardPage() {
     })();
   }, [router]);
 
-  function onLogout() {
-    clearAuth();
-    router.replace('/auth/login');
-  }
-
   if (loading) {
     return (
       <main className="min-h-dvh p-6 space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Dashboard</h1>
-          <button onClick={onLogout} className="nav-link">
-            Çıkış Yap
-          </button>
         </div>
         
         <div className="flex items-center justify-center h-48">
@@ -90,9 +80,6 @@ export default function DashboardPage() {
       {/* Başlık + Aksiyon */}
       <div className="reveal flex items-center justify-between">
         <h1 className="text-2xl font-bold">Dashboard</h1>
-        <button onClick={onLogout} className="btn btn-outline h-9">
-          Çıkış Yap
-        </button>
       </div>
 
       {/* Hata */}
@@ -108,15 +95,25 @@ export default function DashboardPage() {
       <section className="reveal space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">Hesaplarım</h2>
-          <Link href="/accounts" className="btn btn-outline h-8 text-sm">
-            Tümünü Gör
-          </Link>
         </div>
         <AccountCards 
           items={accounts} 
           balances={balances}
           onDelete={(id: string) => {
             setAccounts(accounts.filter(item => item.id !== id));
+          }}
+          onRestore={async (id) => {
+            // Hesap geri yüklendiğinde listeyi yenile
+            try {
+              const [accountsData, balancesData] = await Promise.all([
+                AccountsAPI.list(),
+                ReportsAPI.balances(),
+              ]);
+              setAccounts(accountsData);
+              setBalances(balancesData);
+            } catch (e: unknown) {
+              console.error('Hesap listesi yenilenirken hata:', e);
+            }
           }}
         />
       </section>

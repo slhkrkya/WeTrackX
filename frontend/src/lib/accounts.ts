@@ -8,6 +8,7 @@ export type AccountDTO = {
   currency: string; // ISO 4217
   createdAt: string;
   updatedAt: string;
+  deletedAt?: string; // Soft delete için
 };
 
 export type CreateAccountInput = {
@@ -26,4 +27,7 @@ export const AccountsAPI = {
     api<AccountDTO>(`/accounts/${id}`, { method: 'PATCH', jsonBody: data }),
   delete: (id: string) =>
     api(`/accounts/${id}`, { method: 'DELETE' }),
+  restore: (id: string) =>
+    api<AccountDTO>(`/accounts/${id}/restore`, { method: 'POST' }),
+  listDeleted: () => api<AccountDTO[]>('/accounts/deleted'),
 };

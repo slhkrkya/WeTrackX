@@ -1,6 +1,6 @@
 import {
   Entity, PrimaryGeneratedColumn, Column, ManyToOne,
-  CreateDateColumn, UpdateDateColumn, Index, OneToMany,
+  CreateDateColumn, UpdateDateColumn, Index, OneToMany, DeleteDateColumn,
 } from 'typeorm';
 import { User } from '../users/user.entity';
 import { Transaction } from '../transactions/transaction.entity';
@@ -39,4 +39,7 @@ export class Account {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @DeleteDateColumn({ nullable: true })
+  deletedAt?: Date; // Soft delete için silinme tarihi
 }
