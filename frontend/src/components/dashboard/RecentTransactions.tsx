@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { type TxItem } from '@/lib/reports';
 import { fmtMoney, fmtDate } from '@/lib/format';
 
@@ -49,6 +50,8 @@ function TypePill({ type }: { type: TxItem['type'] }) {
 }
 
 export default function RecentTransactions({ items }: Props) {
+  const router = useRouter();
+
   if (!items?.length) {
     return (
       <div className="reveal">
@@ -157,7 +160,10 @@ export default function RecentTransactions({ items }: Props) {
 
       {/* Daha Fazla Butonu */}
       <div className="mt-6 text-center">
-        <button className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium text-sm">
+        <button 
+          onClick={() => router.push('/transactions')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
           Tüm İşlemleri Gör
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
