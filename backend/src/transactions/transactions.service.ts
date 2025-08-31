@@ -240,6 +240,32 @@ export class TransactionsService {
     }
   }
 
+  // Transaction manager ile hesaba bağlı işlemleri soft delete yap
+  async softDeleteByAccountWithManager(transactionalEntityManager: any, owner: User, accountId: string) {
+    try {
+      // Hesaba bağlı tüm işlemleri bul (account, fromAccount, toAccount)
+      const transactions = await transactionalEntityManager.find(Transaction, {
+        where: [
+          { owner, account: { id: accountId } as any },
+          { owner, fromAccount: { id: accountId } as any },
+          { owner, toAccount: { id: accountId } as any }
+        ],
+        withDeleted: false
+      });
+
+      if (transactions.length > 0) {
+        // Tüm işlemleri soft delete yap
+        await transactionalEntityManager.softRemove(transactions);
+        console.log(`${transactions.length} adet işlem soft delete yapıldı (hesap: ${accountId})`);
+      }
+
+      return transactions.length;
+    } catch (error) {
+      console.error('İşlemleri soft delete yaparken hata:', error);
+      throw error;
+    }
+  }
+
   // Hesaba bağlı tüm işlemleri geri yükle
   async restoreByAccount(owner: User, accountId: string) {
     try {

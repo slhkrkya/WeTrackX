@@ -71,17 +71,26 @@ export class AccountsService {
     if (!acc) return null;
     
     try {
-      // Önce hesaba bağlı tüm işlemleri soft delete yap
-      const deletedTransactionsCount = await this.transactionsService.softDeleteByAccount(owner, id);
-      console.log(`Hesap silinmeden önce ${deletedTransactionsCount} adet işlem soft delete yapıldı`);
-      
-      // Sonra hesabı soft delete yap
-      await this.repo.softRemove(acc);
-      console.log(`Hesap soft delete yapıldı: ${acc.name} (${id})`);
+      // Transaction içinde işlemleri yap
+      await this.repo.manager.transaction(async (transactionalEntityManager) => {
+        // Önce hesaba bağlı tüm işlemleri soft delete yap
+        const deletedTransactionsCount = await this.transactionsService.softDeleteByAccountWithManager(transactionalEntityManager, owner, id);
+        console.log(`Hesap silinmeden önce ${deletedTransactionsCount} adet işlem soft delete yapıldı`);
+        
+        // Sonra hesabı soft delete yap
+        await transactionalEntityManager.softRemove(acc);
+        console.log(`Hesap soft delete yapıldı: ${acc.name} (${id})`);
+      });
       
       return true;
     } catch (e: any) {
       console.error('Hesap silme hatası:', e);
+      
+      // Foreign key constraint hatası ise daha detaylı mesaj ver
+      if (e.message && e.message.includes('foreign key constraint')) {
+        throw new Error('Bu hesaba ait işlemler bulunduğu için silinemiyor. Önce işlemleri silin veya başka bir hesaba aktarın.');
+      }
+      
       throw new Error('Hesap silinirken beklenmeyen bir hata oluştu');
     }
   }
@@ -177,17 +186,24 @@ export class AccountsService {
       });
 
       if (accountsToDelete.length > 0) {
+        let totalDeletedTransactions = 0;
+
         // Her hesap için bağlı işlemleri de kalıcı sil
         for (const account of accountsToDelete) {
           try {
-            // Hesaba bağlı işlemleri kalıcı sil
-            await this.repo.query(
+            // Hesaba bağlı silinmiş işlemleri kalıcı sil
+            const deletedTransactionsResult = await this.repo.query(
               'DELETE FROM "transaction" WHERE ("accountId" = $1 OR "fromAccountId" = $1 OR "toAccountId" = $1) AND "deletedAt" IS NOT NULL',
               [account.id]
             );
-            console.log(`Hesap ${account.name} (${account.id}) için bağlı işlemler kalıcı silindi`);
+            
+            const deletedCount = deletedTransactionsResult.rowCount || 0;
+            totalDeletedTransactions += deletedCount;
+            
+            console.log(`Hesap ${account.name} (${account.id}) için ${deletedCount} adet silinmiş işlem kalıcı silindi`);
           } catch (error) {
             console.error(`Hesap ${account.id} için işlem silme hatası:`, error);
+            // Hata olsa bile devam et
           }
         }
 
@@ -198,8 +214,9 @@ export class AccountsService {
           .where('deletedAt IS NOT NULL AND deletedAt < :date', { date: sevenDaysAgo })
           .execute();
 
-        console.log(`${result.affected} adet eski silinmiş hesap ve bağlı işlemleri kalıcı olarak temizlendi`);
-        return result.affected || 0;
+        const deletedAccountsCount = result.affected || 0;
+        console.log(`${deletedAccountsCount} adet eski silinmiş hesap ve ${totalDeletedTransactions} adet bağlı işlem kalıcı olarak temizlendi`);
+        return deletedAccountsCount;
       }
 
       return 0;

@@ -37,18 +37,21 @@ export class Transaction {
 
   // Income/Expense için tek hesap
   @ManyToOne(() => Account, (a) => a.transactions, { 
-    nullable: true
+    nullable: true,
+    onDelete: 'SET NULL' // Hesap silinirse transaction'ı NULL yap
   })
   account?: Account;
 
   // Transfer için çift hesap
   @ManyToOne(() => Account, (a) => a.outgoingTransfers, { 
-    nullable: true
+    nullable: true,
+    onDelete: 'SET NULL' // Hesap silinirse transaction'ı NULL yap
   })
   fromAccount?: Account;
 
   @ManyToOne(() => Account, (a) => a.incomingTransfers, { 
-    nullable: true
+    nullable: true,
+    onDelete: 'SET NULL' // Hesap silinirse transaction'ı NULL yap
   })
   toAccount?: Account;
 
