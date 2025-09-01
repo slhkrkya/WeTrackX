@@ -4,6 +4,7 @@ import type { Metadata } from 'next';
 import ToastProvider from '@/components/ToastProvider';
 import LoadingProvider from '@/components/LoadingProvider';
 import RouteLoading from '@/components/RouteLoading';
+import { ThemeProvider } from '@/components/ThemeProvider';
 
 export const metadata: Metadata = {
   title: 'WeTrackX',
@@ -12,16 +13,23 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="tr" data-theme="dark">
+    <html lang="tr" suppressHydrationWarning>
       <body>
-        <LoadingProvider>
-          <ToastProvider>
-            <AppShell>
-              <RouteLoading />
-              {children}
-            </AppShell>
-          </ToastProvider>
-        </LoadingProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <LoadingProvider>
+            <ToastProvider>
+              <AppShell>
+                <RouteLoading />
+                {children}
+              </AppShell>
+            </ToastProvider>
+          </LoadingProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

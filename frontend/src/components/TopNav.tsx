@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { clearAuth } from '@/lib/auth';
+import ThemeToggle from './ThemeToggle';
 
 type NavItem = { label: string; href: string };
 
@@ -126,6 +127,11 @@ export default function TopNav() {
         {/* Spacer */}
         <div className="flex-1" />
 
+        {/* Tema Değiştirme Butonu */}
+        <div className="hidden md:block">
+          <ThemeToggle />
+        </div>
+
         {/* Profile Dropdown */}
         <div className="hidden md:block relative profile-dropdown">
           <button
@@ -197,7 +203,7 @@ export default function TopNav() {
                     'block px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
                     active 
                       ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-sm' 
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white',
+                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800',
                   ].join(' ')}
                   aria-current={active ? 'page' : undefined}
                 >
@@ -206,26 +212,39 @@ export default function TopNav() {
               );
             })}
             
-            {/* Yeni İşlem Ekle Butonu - Mobil */}
+            {/* Mobil Yeni İşlem Ekle Butonu */}
             <Link
               href="/transactions/new"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white text-gray-600 dark:text-gray-300 transition-all duration-300 transform hover:scale-105 active:scale-95"
+              className="block px-3 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-800 hover:bg-gradient-to-r hover:from-green-500 hover:to-emerald-500 hover:text-white text-gray-600 dark:text-gray-300 transition-all duration-200"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Yeni İşlem
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Yeni İşlem Ekle
+              </div>
             </Link>
-            <hr className="my-2 border-gray-200 dark:border-gray-700" />
+
+            {/* Mobil Tema Değiştirme */}
+            <div className="px-3 py-2">
+              <ThemeToggle />
+            </div>
+
+            {/* Mobil Profil Linki */}
             <Link
               href="/profile"
-              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-all duration-200"
+              className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
             >
-              Profil
+              Profil Yönetimi
             </Link>
+
+            {/* Mobil Çıkış Butonu */}
             <button
-              onClick={onLogout}
-              className="block w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200"
+              onClick={() => {
+                setOpen(false);
+                onLogout();
+              }}
+              className="block w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
             >
               Çıkış Yap
             </button>
