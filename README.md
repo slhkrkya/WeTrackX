@@ -139,15 +139,26 @@ cp .env.example .env
 ```env
 # Veritabanı Bağlantısı
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/wetrackx
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=wetrackx
+DB_USER=postgres
+DB_PASS=postgres
+
 # Veya kullanıcı oluşturduysanız:
 # DATABASE_URL=postgres://wetrackx_user:your_password@localhost:5432/wetrackx
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=wetrackx
+DB_USER=wetrackx_user
+DB_PASS=your_password
 
 # Uygulama Ayarları
-JWT_SECRET=your_super_secret_jwt_key_here
 PORT=4000
-
-# Geliştirme Ayarları
 NODE_ENV=development
+JWT_SECRET=your_super_secret_jwt_key_here
+JWT_EXPIRES=1d
+
 ```
 
 ```bash
