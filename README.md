@@ -1,5 +1,4 @@
-# WeTrackX - Kişisel Finans Takip Uygulaması
-
+# WeTrackX - Kişisel Finans Takip Uygulaması - https://drive.google.com/file/d/1cLDVjC5m9rcKJn3QRkS66Q7fbuTmkqQw/view?usp=sharing
 WeTrackX, kullanıcıların kişisel finanslarını yönetebileceği, gelir ve giderlerini takip edebileceği, kategorize edebileceği ve detaylı raporlar alabileceği modern bir web uygulamasıdır.
 
 ## 🚀 Özellikler
