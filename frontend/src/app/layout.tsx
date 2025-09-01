@@ -5,6 +5,7 @@ import ToastProvider from '@/components/ToastProvider';
 import LoadingProvider from '@/components/LoadingProvider';
 import RouteLoading from '@/components/RouteLoading';
 import { ThemeProvider } from '@/components/ThemeProvider';
+import ErrorBoundary from '@/components/ErrorBoundary';
 
 export const metadata: Metadata = {
   title: 'WeTrackX',
@@ -21,14 +22,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <LoadingProvider>
-            <ToastProvider>
-              <AppShell>
-                <RouteLoading />
-                {children}
-              </AppShell>
-            </ToastProvider>
-          </LoadingProvider>
+          <ErrorBoundary>
+            <LoadingProvider>
+              <ToastProvider>
+                <AppShell>
+                  <RouteLoading />
+                  {children}
+                </AppShell>
+              </ToastProvider>
+            </LoadingProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </body>
     </html>

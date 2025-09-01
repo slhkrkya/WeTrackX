@@ -262,7 +262,6 @@ export default function TransactionsClient() {
       }
     })();
     return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // İşlem listesi – filtrelere bağlı

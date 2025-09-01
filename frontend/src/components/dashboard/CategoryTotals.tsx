@@ -1,12 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect, useRef } from 'react';
 import { type CategoryTotal } from '@/lib/reports';
 import { fmtMoney } from '@/lib/format';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 type Props = { title: string; currency?: string; items: CategoryTotal[] };
 
 export default function CategoryTotals({ title, currency = 'TRY', items }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  
   const totals = useMemo(
     () =>
       (items ?? []).map((c) => ({
@@ -35,6 +39,42 @@ export default function CategoryTotals({ title, currency = 'TRY', items }: Props
     return 'bg-gradient-to-r from-blue-500 to-blue-600';
   }, [title]);
 
+  // Progress bar animasyonları
+  useEffect(() => {
+    if (!containerRef.current || !items?.length) return;
+
+    // GSAP plugins'ini kaydet
+    gsap.registerPlugin(ScrollTrigger);
+
+    const progressBars = containerRef.current.querySelectorAll('.progress-bar-fill');
+    const animations: gsap.core.Tween[] = [];
+
+    progressBars.forEach((bar, index) => {
+      const targetWidth = bar.getAttribute('data-width') || '0';
+      
+      const anim = gsap.fromTo(bar,
+        { width: '0%' },
+        {
+          width: `${targetWidth}%`,
+          duration: 1.2,
+          ease: 'power2.out',
+          delay: 0.2 + (index * 0.1), // Her bar için farklı gecikme
+          scrollTrigger: {
+            trigger: containerRef.current,
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play reverse play reverse',
+          }
+        }
+      );
+      animations.push(anim);
+    });
+
+    return () => {
+      animations.forEach(anim => anim.kill());
+    };
+  }, [items]);
+
   if (!items?.length) {
     return (
       <div className="reveal">
@@ -54,15 +94,15 @@ export default function CategoryTotals({ title, currency = 'TRY', items }: Props
   }
 
   return (
-    <div className="reveal">
+    <div ref={containerRef} className="reveal flex flex-col h-full">
       {/* Başlık */}
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
         <p className="text-sm text-gray-600 dark:text-gray-400">Kategori bazlı dağılım</p>
       </div>
 
-      {/* Kategoriler */}
-      <div className="space-y-4">
+      {/* Kategoriler - Esnek alan */}
+      <div className="flex-1 space-y-4 min-h-0">
         {totals.map((c) => {
           const percent = grand > 0 ? Math.min(100, Math.round((c._value / grand) * 100)) : 0;
           return (
@@ -103,8 +143,10 @@ export default function CategoryTotals({ title, currency = 'TRY', items }: Props
                   title={`${percent}%`}
                 >
                   <div
-                    className={`h-full rounded-xl bg-gradient-to-r ${colorClass} transition-all duration-500 ease-out shadow-sm`}
-                    style={{ width: `${percent}%` }}
+                    className={`h-full rounded-xl bg-gradient-to-r ${colorClass} shadow-sm progress-bar-fill`}
+                    style={{ width: '0%' }}
+                    data-width={percent}
+                    data-percent={percent}
                   />
                 </div>
                 
@@ -120,8 +162,8 @@ export default function CategoryTotals({ title, currency = 'TRY', items }: Props
         })}
       </div>
 
-      {/* Toplam Özeti */}
-      <div className="mt-8 p-6 bg-gradient-to-r from-blue-50/80 to-purple-50/80 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 dark:border-blue-800/30">
+      {/* Toplam Özeti - Her zaman en altta */}
+      <div className="mt-8 p-6 bg-gradient-to-r from-blue-50/80 to-purple-50/80 dark:from-blue-900/20 dark:to-purple-900/20 backdrop-blur-sm rounded-2xl border border-blue-100/50 dark:border-blue-800/30 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div>
             <h4 className="font-bold text-gray-900 dark:text-white text-lg">Toplam</h4>

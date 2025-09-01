@@ -44,7 +44,6 @@ export default function NewCategoryClient() {
   // Tür değiştiğinde, kullanıcı renk alanını boş bırakmışsa otomatik makul hex ata
   useEffect(() => {
     if (!color.trim()) setColor(defaultHexForKind(kind));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kind]);
 
   function validate() {

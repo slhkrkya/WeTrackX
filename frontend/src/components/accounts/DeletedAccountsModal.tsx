@@ -95,7 +95,7 @@ export default function DeletedAccountsModal({ isOpen, onClose, onRestore }: Pro
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-gray-200/40 dark:bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
@@ -220,12 +220,6 @@ export default function DeletedAccountsModal({ isOpen, onClose, onRestore }: Pro
 
         {/* Footer */}
         <div className="flex justify-end p-4 sm:p-6 border-t border-gray-200 dark:border-gray-700">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-          >
-            Kapat
-          </button>
         </div>
       </div>
     </div>

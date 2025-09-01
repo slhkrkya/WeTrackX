@@ -48,7 +48,7 @@ type Tooltip = {
   position: 'top' | 'bottom' | 'left' | 'right';
 } | null;
 
-type ViewMode = 'monthly' | 'yearly';
+type ViewMode = 'all-time' | 'yearly' | 'monthly' | 'weekly';
 
 export default function MonthlySeriesChart({ incomeCategories, expenseCategories }: Props) {
   const [hoveredSlice, setHoveredSlice] = useState<string | null>(null);
@@ -59,17 +59,27 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
   const [loading, setLoading] = useState(true);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [tooltip, setTooltip] = useState<Tooltip>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('monthly');
-  const [selectedYear, setSelectedYear] = useState<number | null>(new Date().getFullYear());
+  const [viewMode, setViewMode] = useState<ViewMode>('all-time');
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   
-  // Yıl seçimine göre viewMode'u otomatik ayarla
+  // View mode'u otomatik olarak belirle
   useEffect(() => {
-    if (selectedYear) {
+    if (selectedWeek) {
+      setViewMode('weekly');
+    } else if (selectedMonth) {
       setViewMode('monthly');
-    } else {
+    } else if (selectedYear) {
       setViewMode('yearly');
+    } else {
+      setViewMode('all-time');
     }
-  }, [selectedYear]);
+  }, [selectedYear, selectedMonth, selectedWeek]);
+  
+  // Abort controller ref'i
+  const abortControllerRef = useRef<AbortController | null>(null);
+  
   const tooltipTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Animasyon ref'leri
@@ -82,15 +92,147 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
     return Array.from({ length: 11 }, (_, i) => 2020 + i);
   }, []);
 
-  // Aylık verileri al
+  // Ay listesi oluştur
+  const monthOptions = useMemo(() => {
+    return [
+      { value: '', label: 'Tüm Aylar' },
+      { value: '01', label: 'Ocak' },
+      { value: '02', label: 'Şubat' },
+      { value: '03', label: 'Mart' },
+      { value: '04', label: 'Nisan' },
+      { value: '05', label: 'Mayıs' },
+      { value: '06', label: 'Haziran' },
+      { value: '07', label: 'Temmuz' },
+      { value: '08', label: 'Ağustos' },
+      { value: '09', label: 'Eylül' },
+      { value: '10', label: 'Ekim' },
+      { value: '11', label: 'Kasım' },
+      { value: '12', label: 'Aralık' }
+    ];
+  }, []);
+
+  // Hafta listesi oluştur (seçili ay için)
+  const weekOptions = useMemo(() => {
+    if (!selectedYear) return [];
+    
+    const weeks = [{ value: '', label: 'Tüm Haftalar' }];
+    
+    if (selectedMonth) {
+      // Belirli bir ay seçilmişse, o ayın haftalarını hesapla
+      const year = selectedYear;
+      const month = parseInt(selectedMonth) - 1; // 0-based index
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      
+      let currentDate = new Date(firstDay);
+      
+      while (currentDate <= lastDay) {
+        const weekStart = new Date(currentDate);
+        const weekEnd = new Date(currentDate);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        // Hafta sonu ayın son gününden geçiyorsa, ayın son gününe ayarla
+        if (weekEnd > lastDay) {
+          weekEnd.setTime(lastDay.getTime());
+        }
+        
+        const weekLabel = `${weekStart.getDate()} - ${weekEnd.getDate()} ${weekStart.toLocaleDateString('tr-TR', { month: 'short' })}`;
+        const weekValue = `${year}-${selectedMonth}-${weekStart.getDate().toString().padStart(2, '0')}`;
+        
+        weeks.push({ value: weekValue, label: weekLabel });
+        
+        // Sonraki haftaya geç
+        currentDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      }
+    } else {
+      // Tüm aylar seçilmişse, yılın tüm haftalarını hesapla
+      for (let month = 0; month < 12; month++) {
+        const firstDay = new Date(selectedYear, month, 1);
+        const lastDay = new Date(selectedYear, month + 1, 0);
+        
+        let currentDate = new Date(firstDay);
+        
+        while (currentDate <= lastDay) {
+          const weekStart = new Date(currentDate);
+          const weekEnd = new Date(currentDate);
+          weekEnd.setDate(weekEnd.getDate() + 6);
+          
+          if (weekEnd > lastDay) {
+            weekEnd.setTime(lastDay.getTime());
+          }
+          
+          const weekLabel = `${weekStart.getDate()} - ${weekEnd.getDate()} ${weekStart.toLocaleDateString('tr-TR', { month: 'short' })}`;
+          const weekValue = `${selectedYear}-${(month + 1).toString().padStart(2, '0')}-${weekStart.getDate().toString().padStart(2, '0')}`;
+          
+          weeks.push({ value: weekValue, label: weekLabel });
+          
+          currentDate = new Date(currentDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+        }
+      }
+    }
+    
+    return weeks;
+  }, [selectedYear, selectedMonth]);
+
+  // Veri yükleme fonksiyonu
   useEffect(() => {
-    const fetchMonthlyData = async () => {
+    const fetchData = async () => {
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      
       try {
         setLoading(true);
-        const series = await ReportsAPI.monthlySeries(24); // 2 yıllık veri al
+        let series;
         
-        // Seçili yıla göre filtrele
-        const filteredData = series
+        // View mode'a göre veri al
+        switch (viewMode) {
+          case 'all-time':
+            series = await ReportsAPI.monthlySeries(120); // 10 yıllık veri
+            break;
+          case 'yearly':
+            series = await ReportsAPI.monthlySeries(72); // 6 yıllık veri
+            break;
+          case 'monthly':
+            series = await ReportsAPI.monthlySeries(24); // 2 yıllık veri
+            break;
+          case 'weekly':
+            series = await ReportsAPI.monthlySeries(12); // 1 yıllık veri
+            break;
+          default:
+            series = await ReportsAPI.monthlySeries(24);
+        }
+        
+        // Abort signal kontrolü
+        if (controller.signal.aborted) return;
+        
+        let filteredData;
+        
+        switch (viewMode) {
+          case 'all-time':
+            // Tüm zamanlar - yıllık toplamlar
+            const yearlyTotals = new Map<number, { income: number; expense: number }>();
+            series.forEach(item => {
+              const year = new Date(item.month + '-01').getFullYear();
+              const current = yearlyTotals.get(year) || { income: 0, expense: 0 };
+              yearlyTotals.set(year, {
+                income: current.income + Math.abs(Number(item.income)),
+                expense: current.expense + Math.abs(Number(item.expense))
+              });
+            });
+            
+            const sortedYears = Array.from(yearlyTotals.keys()).sort((a, b) => a - b);
+            filteredData = sortedYears.map(year => ({
+              year: year.toString(),
+              income: yearlyTotals.get(year)?.income || 0,
+              expense: yearlyTotals.get(year)?.expense || 0
+            }));
+            setYearlyData(filteredData);
+            setMonthlyData([]);
+            break;
+            
+          case 'yearly':
+            // Yıllık görünüm - seçili yıla göre aylık veriler
+            const yearFiltered = series
           .filter(item => {
             const itemYear = new Date(item.month + '-01').getFullYear();
             return selectedYear ? itemYear === selectedYear : true;
@@ -99,8 +241,8 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
             month: new Date(item.month + '-01').toLocaleDateString('tr-TR', { 
               month: 'short'
             }),
-            income: Math.abs(Number(item.income)), // Mutlak değer
-            expense: Math.abs(Number(item.expense)) // Mutlak değer
+                income: Math.abs(Number(item.income)),
+                expense: Math.abs(Number(item.expense))
           }));
         
         // Eksik ayları 0 ile doldur
@@ -110,87 +252,198 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
         });
         
         const completeData = allMonths.map(month => {
-          const existing = filteredData.find(d => d.month === month);
+              const existing = yearFiltered.find(d => d.month === month);
           return existing || { month, income: 0, expense: 0 };
         });
         
         setMonthlyData(completeData);
+            setYearlyData([]);
+            break;
+            
+          case 'monthly':
+            // Aylık görünüm - seçili aya göre haftalık veriler
+            const monthFiltered = series
+              .filter(item => {
+                const itemDate = new Date(item.month + '-01');
+                const itemYear = itemDate.getFullYear();
+                const itemMonth = (itemDate.getMonth() + 1).toString().padStart(2, '0');
+                
+                if (!selectedYear) return true;
+                if (itemYear !== selectedYear) return false;
+                
+                // Eğer ay seçilmişse, sadece o ayı filtrele
+                if (selectedMonth && itemMonth !== selectedMonth) return false;
+                
+                return true;
+              })
+              .map(item => {
+                const date = new Date(item.month + '-01');
+                const weekNumber = Math.ceil(date.getDate() / 7);
+                return {
+                  month: `${weekNumber}. Hafta`,
+                  income: Math.abs(Number(item.income)),
+                  expense: Math.abs(Number(item.expense))
+                };
+              });
+            
+            setMonthlyData(monthFiltered);
+            setYearlyData([]);
+            break;
+            
+          case 'weekly':
+            // Haftalık görünüm - seçili haftaya göre günlük veriler
+            const weekFiltered = series
+              .filter(item => {
+                const itemDate = new Date(item.month + '-01');
+                
+                if (!selectedYear) return false;
+                if (itemDate.getFullYear() !== selectedYear) return false;
+                
+                // Eğer ay seçilmişse, sadece o ayı filtrele
+                if (selectedMonth) {
+                  const itemMonth = (itemDate.getMonth() + 1).toString().padStart(2, '0');
+                  if (itemMonth !== selectedMonth) return false;
+                }
+                
+                // Eğer hafta seçilmişse, sadece o haftayı filtrele
+                if (selectedWeek) {
+                  const weekStart = new Date(selectedWeek);
+                  const weekEnd = new Date(weekStart);
+                  weekEnd.setDate(weekEnd.getDate() + 6);
+                  
+                  return itemDate >= weekStart && itemDate <= weekEnd;
+                }
+                
+                return true;
+              })
+              .map(item => {
+                const date = new Date(item.month + '-01');
+                return {
+                  month: date.toLocaleDateString('tr-TR', { 
+                    day: 'numeric',
+                    month: 'short'
+                  }),
+                  income: Math.abs(Number(item.income)),
+                  expense: Math.abs(Number(item.expense))
+                };
+              });
+            
+            setMonthlyData(weekFiltered);
+            setYearlyData([]);
+            break;
+        }
+        
       } catch (error) {
-        console.error('Aylık veri alınamadı:', error);
-        setMonthlyData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (viewMode === 'monthly') {
-      fetchMonthlyData();
-    }
-  }, [selectedYear, viewMode]);
-
-  // Yıllık verileri al
-  useEffect(() => {
-    const fetchYearlyData = async () => {
-      try {
-        setLoading(true);
-        const series = await ReportsAPI.monthlySeries(72); // 6 yıllık veri al
-        
-        // Yıllık toplamları hesapla
-        const yearlyTotals = new Map<number, { income: number; expense: number }>();
-        
-        series.forEach(item => {
-          const year = new Date(item.month + '-01').getFullYear();
-          const current = yearlyTotals.get(year) || { income: 0, expense: 0 };
-          yearlyTotals.set(year, {
-            income: current.income + Math.abs(Number(item.income)), // Mutlak değer
-            expense: current.expense + Math.abs(Number(item.expense)) // Mutlak değer
-          });
-        });
-        
-        // Son 6 yılı al ve sırala (yıla göre artan)
-        const sortedYears = Array.from(yearlyTotals.keys()).sort((a, b) => a - b).slice(-6);
-        
-        const data = sortedYears.map(year => ({
-          year: year.toString(),
-          income: yearlyTotals.get(year)?.income || 0,
-          expense: yearlyTotals.get(year)?.expense || 0
-        }));
-        
-        setYearlyData(data);
-      } catch (error) {
-        console.error('Yıllık veri alınamadı:', error);
+        if (!controller.signal.aborted) {
+          console.error('Veri alınamadı:', error);
+          setMonthlyData([]);
         setYearlyData([]);
+        }
       } finally {
+        if (!controller.signal.aborted) {
         setLoading(false);
+        }
       }
     };
 
-    if (viewMode === 'yearly') {
-      fetchYearlyData();
-    }
-  }, [viewMode]);
+    fetchData();
 
-  // Kategori verilerini yıl seçimine göre güncelle
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [viewMode, selectedYear, selectedMonth, selectedWeek]);
+
+
+
+  // Component unmount olduğunda cleanup
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (tooltipTimeoutRef.current) {
+        clearTimeout(tooltipTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Kategori verilerini filtreleme seçimlerine göre güncelle
   useEffect(() => {
     const fetchCategoryData = async () => {
       try {
         setCategoryLoading(true);
-        if (!selectedYear) {
-          // Yıllık görünümde tüm kategoriler
+        
+        let fromDate: string | undefined;
+        let toDate: string | undefined;
+        
+        switch (viewMode) {
+          case 'all-time':
+            // Tüm zamanlar - filtreleme yok
           setFilteredIncomeCategories(incomeCategories);
           setFilteredExpenseCategories(expenseCategories);
+            return;
+            
+          case 'yearly':
+            // Yıllık görünüm - seçili yıla ait kategoriler
+            if (selectedYear) {
+              fromDate = `${selectedYear}-01-01`;
+              toDate = `${selectedYear}-12-31`;
+            }
+            break;
+            
+          case 'monthly':
+            // Aylık görünüm - seçili aya ait kategoriler
+            if (selectedYear) {
+              if (selectedMonth) {
+                // Belirli bir ay seçilmişse
+                fromDate = `${selectedYear}-${selectedMonth}-01`;
+                const lastDay = new Date(selectedYear, parseInt(selectedMonth), 0).getDate();
+                toDate = `${selectedYear}-${selectedMonth}-${lastDay}`;
         } else {
-          // Aylık görünümde seçili yıla ait kategoriler
-          const fromDate = `${selectedYear}-01-01`;
-          const toDate = `${selectedYear}-12-31`;
-          
-          const [yearlyIncome, yearlyExpense] = await Promise.all([
+                // Tüm aylar seçilmişse
+                fromDate = `${selectedYear}-01-01`;
+                toDate = `${selectedYear}-12-31`;
+              }
+            }
+            break;
+            
+          case 'weekly':
+            // Haftalık görünüm - seçili haftaya ait kategoriler
+            if (selectedYear) {
+              if (selectedWeek) {
+                // Belirli bir hafta seçilmişse
+                fromDate = selectedWeek;
+                const weekEnd = new Date(selectedWeek);
+                weekEnd.setDate(weekEnd.getDate() + 6);
+                toDate = weekEnd.toISOString().split('T')[0];
+              } else if (selectedMonth) {
+                // Belirli bir ay seçilmişse ama hafta seçilmemişse
+                fromDate = `${selectedYear}-${selectedMonth}-01`;
+                const lastDay = new Date(selectedYear, parseInt(selectedMonth), 0).getDate();
+                toDate = `${selectedYear}-${selectedMonth}-${lastDay}`;
+              } else {
+                // Tüm aylar seçilmişse
+                fromDate = `${selectedYear}-01-01`;
+                toDate = `${selectedYear}-12-31`;
+              }
+            }
+            break;
+        }
+        
+        if (fromDate && toDate) {
+          const [filteredIncome, filteredExpense] = await Promise.all([
             ReportsAPI.categoryTotals('INCOME', fromDate, toDate),
             ReportsAPI.categoryTotals('EXPENSE', fromDate, toDate)
           ]);
           
-          setFilteredIncomeCategories(yearlyIncome);
-          setFilteredExpenseCategories(yearlyExpense);
+          setFilteredIncomeCategories(filteredIncome);
+          setFilteredExpenseCategories(filteredExpense);
+        } else {
+          // Filtreleme yoksa tüm verileri kullan
+          setFilteredIncomeCategories(incomeCategories);
+          setFilteredExpenseCategories(expenseCategories);
         }
       } catch (error) {
         console.error('Kategori verileri alınamadı:', error);
@@ -203,7 +456,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
     };
 
     fetchCategoryData();
-  }, [incomeCategories, expenseCategories, selectedYear]);
+  }, [incomeCategories, expenseCategories, viewMode, selectedYear, selectedMonth, selectedWeek]);
 
   // Grafik animasyonları
   useEffect(() => {
@@ -219,28 +472,45 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
         const bars = barChartRef.current.querySelectorAll('[data-bar]');
         
         if (bars.length > 0) {
-          // Önce tüm barları 0 yüksekliğinde başlat
-          gsap.set(bars, { height: 0, opacity: 0 });
+          // Her bar için hedef yüksekliği hesapla ve sakla
+          const barTargets = Array.from(bars).map(bar => {
+            // Bar'ın mevcut yüksekliğini al
+            const rect = bar.getBoundingClientRect();
+            const style = window.getComputedStyle(bar);
+            const height = parseFloat(style.height) || rect.height;
+            return { element: bar, targetHeight: height };
+          });
+
+          // Önce tüm barları 0 yüksekliğinde başlat ve görünmez yap
+          gsap.set(bars, { 
+            height: 0, 
+            opacity: 0,
+            transform: 'scaleY(0)',
+            transformOrigin: 'bottom'
+          });
           
-          // Sonra animasyonla yükselt - tüm barlar aynı anda
-          gsap.to(bars, 
-            { 
-              height: (i, target) => {
-                const computedStyle = window.getComputedStyle(target);
-                return computedStyle.height;
-              },
+          // Kısa bir gecikme sonra animasyonu başlat
+          setTimeout(() => {
+            // Sonra animasyonla yükselt - her bar kendi hedef yüksekliğine
+            barTargets.forEach(({ element, targetHeight }, index) => {
+              gsap.to(element, 
+                { 
+                  height: targetHeight,
               opacity: 1,
+                  transform: 'scaleY(1)',
               duration: 1.2,
+                  delay: index * 0.05, // Her bar 0.05 saniye gecikmeli başlasın (daha hızlı)
               ease: 'power2.out',
-              stagger: 0, // Hiç stagger yok - hepsi aynı anda
               scrollTrigger: {
                 trigger: barChartRef.current,
                 start: 'top 80%',
                 end: 'bottom 20%',
-                toggleActions: 'play none none reverse',
+                    toggleActions: 'play reverse play reverse',
               }
             }
           );
+            });
+          }, 50); // 50ms gecikme
         }
       }
 
@@ -271,7 +541,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                     trigger: ref.current,
                     start: 'top 80%',
                     end: 'bottom 20%',
-                    toggleActions: 'play none none reverse',
+                    toggleActions: 'play reverse play reverse',
                   }
                 }
               );
@@ -283,7 +553,17 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
 
     return () => {
       clearTimeout(timer);
-      ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      // Sadece bu bileşenin ScrollTrigger'larını temizle
+      const currentBarChartRef = barChartRef.current;
+      const currentIncomePieRef = incomePieRef.current;
+      const currentExpensePieRef = expensePieRef.current;
+      ScrollTrigger.getAll().forEach(trigger => {
+        if (trigger.vars.trigger === currentBarChartRef || 
+            trigger.vars.trigger === currentIncomePieRef || 
+            trigger.vars.trigger === currentExpensePieRef) {
+          trigger.kill();
+        }
+      });
     };
   }, [loading, categoryLoading]);
 
@@ -735,7 +1015,8 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                               style={{
                                 width: barWidth,
                                 height: incomeHeight,
-                                minHeight: '8px'
+                                minHeight: '8px',
+                                transformOrigin: 'bottom'
                               }}
                               onMouseEnter={(e) => handleBarHover(e, item, 'income')}
                               onMouseLeave={handleBarLeave}
@@ -752,7 +1033,8 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
                               style={{
                                 width: barWidth,
                                 height: expenseHeight,
-                                minHeight: '8px'
+                                minHeight: '8px',
+                                transformOrigin: 'bottom'
                               }}
                               onMouseEnter={(e) => handleBarHover(e, item, 'expense')}
                               onMouseLeave={handleBarLeave}
@@ -811,12 +1093,16 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
           {/* Filtreler */}
           <div className="flex items-center gap-4">
             {/* Yıl Seçimi */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Yıl:</label>
               <div className="relative">
                 <select
                   value={selectedYear || ''}
-                  onChange={(e) => setSelectedYear(e.target.value ? Number(e.target.value) : null)}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value ? Number(e.target.value) : null);
+                    setSelectedMonth(null);
+                    setSelectedWeek(null);
+                  }}
                   className="appearance-none text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 pr-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm"
                 >
                   <option value="">Tüm Yıllar</option>
@@ -832,40 +1118,56 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
               </div>
             </div>
             
-            {/* Görünüm Toggle */}
-            <div className="flex items-center gap-3">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Görünüm:</label>
-              <div className="flex bg-gray-100 dark:bg-gray-700 rounded-xl p-1 shadow-sm">
-                <button
-                  onClick={() => setViewMode('monthly')}
-                  disabled={!selectedYear}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 font-medium ${
-                    viewMode === 'monthly' && selectedYear
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                      : selectedYear
-                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
-                      : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  }`}
-                  aria-pressed={viewMode === 'monthly'}
-                >
-                  Aylık
-                </button>
-                <button
-                  onClick={() => setViewMode('yearly')}
-                  disabled={selectedYear !== null}
-                  className={`px-4 py-2 text-sm rounded-lg transition-all duration-200 font-medium ${
-                    viewMode === 'yearly' && selectedYear === null
-                      ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
-                      : selectedYear === null
-                      ? 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-600'
-                      : 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
-                  }`}
-                  aria-pressed={viewMode === 'yearly'}
-                >
-                  Yıllık
-                </button>
+            {/* Ay Seçimi - Yıl seçildiğinde aktif */}
+            {selectedYear && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ay:</label>
+                <div className="relative">
+                  <select
+                    value={selectedMonth || ''}
+                    onChange={(e) => {
+                      setSelectedMonth(e.target.value || null);
+                      setSelectedWeek(null);
+                    }}
+                    className="appearance-none text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 pr-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm"
+                  >
+                    <option value="">Tüm Aylar</option>
+                    {monthOptions.slice(1).map((month) => (
+                      <option key={month.value} value={month.value}>{month.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Hafta Seçimi - Ay seçildiğinde aktif */}
+            {selectedYear && selectedMonth && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hafta:</label>
+                <div className="relative">
+                  <select
+                    value={selectedWeek || ''}
+                    onChange={(e) => setSelectedWeek(e.target.value || null)}
+                    className="appearance-none text-sm border border-gray-200 dark:border-gray-600 rounded-xl px-4 py-2 pr-8 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-500 shadow-sm"
+                  >
+                    <option value="">Tüm Haftalar</option>
+                    {weekOptions.slice(1).map((week) => (
+                      <option key={week.value} value={week.value}>{week.label}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
               </div>
             </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -933,7 +1235,7 @@ export default function MonthlySeriesChart({ incomeCategories, expenseCategories
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Bar Chart - Sol Taraf */}
             <div className="xl:col-span-1">
-              <BarChart data={viewMode === 'monthly' ? monthlyData : yearlyData} />
+            <BarChart data={viewMode === 'all-time' ? yearlyData : monthlyData} />
             </div>
 
             {/* Pasta Grafikleri - Sağ Taraf */}
