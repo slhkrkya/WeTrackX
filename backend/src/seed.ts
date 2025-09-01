@@ -50,11 +50,13 @@ async function run() {
         priority: cat.priority,
         color: cat.color,
         isSystem: true,
+        isSystemOverride: false, // Sistem kategorisi olduğu için false
+        originalSystemId: undefined, // Sistem kategorisi olduğu için undefined
       });
       await catRepo.save(existingCat);
       console.log(`Sistem kategorisi oluşturuldu: ${cat.name} (Gelir) - Öncelik: ${cat.priority} - Renk: ${cat.color}`);
     } else {
-      // Mevcut kategoriyi güncelle
+      // Mevcut kategoriyi güncelle (sadece öncelik ve renk)
       existingCat.priority = cat.priority;
       existingCat.color = cat.color;
       await catRepo.save(existingCat);
@@ -74,11 +76,13 @@ async function run() {
         priority: cat.priority,
         color: cat.color,
         isSystem: true,
+        isSystemOverride: false, // Sistem kategorisi olduğu için false
+        originalSystemId: undefined, // Sistem kategorisi olduğu için undefined
       });
       await catRepo.save(existingCat);
       console.log(`Sistem kategorisi oluşturuldu: ${cat.name} (Gider) - Öncelik: ${cat.priority} - Renk: ${cat.color}`);
     } else {
-      // Mevcut kategoriyi güncelle
+      // Mevcut kategoriyi güncelle (sadece öncelik ve renk)
       existingCat.priority = cat.priority;
       existingCat.color = cat.color;
       await catRepo.save(existingCat);
