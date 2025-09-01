@@ -120,8 +120,18 @@ GRANT ALL PRIVILEGES ON DATABASE wetrackx TO wetrackx_user;
 # Çıkış yapın
 \q
 ```
+### 4. Visual Studio Code Extensions Önerileri
 
-### 4. Backend Kurulumu
+- DotENV
+- ES7+ React/Redux/React-Native snippets
+- NestJs Snippets
+- Next.js snippets
+- Prettier - Code formatter
+- Tailwind CSS IntelliSense
+- ESLint
+**Not**: Eğer lint hatası alırsanız, ESLint'i disable edip Prettier'i tekrar başlatın
+
+### 5. Backend Kurulumu
 
 ```bash
 # Backend klasörüne gidin
@@ -130,9 +140,7 @@ cd backend
 # Bağımlılıkları yükleyin
 npm install
 
-# Ortam değişkenlerini ayarlayın
-cp .env.example .env
-# Veya .env dosyasını manuel oluşturun
+# Ortam değişkenlerini ayarlayın -> .env dosyasını backend kökünde manuel oluşturun
 ```
 
 #### Backend .env Dosyası
@@ -172,10 +180,6 @@ npm run seed
 npm run start:dev
 ```
 
-**Backend başarıyla çalışıyor mu kontrol edin:**
-- http://localhost:4000/health adresine gidin
-- "OK" mesajı görmelisiniz
-
 ### 5. Frontend Kurulumu
 
 ```bash
@@ -189,9 +193,7 @@ cd frontend
 # Bağımlılıkları yükleyin
 npm install
 
-# Ortam değişkenlerini ayarlayın
-cp .env.example .env.local
-# Veya .env.local dosyasını manuel oluşturun
+# Ortam değişkenlerini ayarlayın -> .env.local dosyasını frontend kökünde manuel oluşturun
 ```
 
 #### Frontend .env.local Dosyası
